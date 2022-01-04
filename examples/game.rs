@@ -4,9 +4,12 @@ use bevy::{
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
 
-use space::{camera::*, controller::{tag::ControllerPlayerTag, ControllerPlugin}};
-use space::scale::*;
 use space::camera::tag::*;
+use space::scale::*;
+use space::{
+    camera::*,
+    controller::{tag::ControllerPlayerTag, ControllerPlugin},
+};
 
 #[derive(Component)]
 pub struct Player;
@@ -48,6 +51,11 @@ fn setup(
         ..Default::default()
     });
 
+    let body = commands
+        .spawn_bundle((GlobalTransform::identity(), Transform::identity()))
+        .insert(ControllerPlayerTag)
+        .id();
+
     let player = commands
         .spawn_bundle(PbrBundle {
             mesh: cube_handle,
@@ -56,7 +64,6 @@ fn setup(
             ..Default::default()
         })
         .insert(Wireframe)
-        .insert(ControllerPlayerTag)
         .id();
 
     let camera = commands
@@ -67,7 +74,8 @@ fn setup(
         })
         .insert(PlayerTag)
         .id();
-    
+
+    commands.entity(body).push_children(&[player, camera]);
 }
 
 fn spawn_marker(
@@ -92,4 +100,3 @@ fn spawn_marker(
         })
         .insert(Wireframe);
 }
-

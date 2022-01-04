@@ -41,7 +41,10 @@ fn handle_mouse_input(
         if settings.yaw_pitch_roll.y < -PITCH_BOUND {
             settings.yaw_pitch_roll.y = -PITCH_BOUND;
         }
-        rotation_events.send(RotationEvent::new(Vec2::new(settings.yaw_pitch_roll.x, settings.yaw_pitch_roll.y)));
+        rotation_events.send(RotationEvent::new(Vec2::new(
+            settings.yaw_pitch_roll.x,
+            settings.yaw_pitch_roll.y,
+        )));
     }
 }
 
@@ -52,7 +55,8 @@ fn handle_rotation_events(
     if let Some(event) = events.iter().next() {
         for mut transform in query.iter_mut() {
             let rotation = **event;
-            transform.rotation = Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
+            transform.rotation =
+                Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
             let rotation_matrix = Mat3::from_quat(transform.rotation);
             transform.translation = rotation_matrix.mul_vec3(Vec3::new(0.0, 1.0, 15.0));
         }

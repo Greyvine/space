@@ -1,9 +1,9 @@
 mod event;
 pub mod tag;
 
-use bevy::prelude::*;
 use self::event::*;
 use self::tag::*;
+use bevy::prelude::*;
 
 pub struct ControllerPlugin;
 
@@ -19,14 +19,13 @@ fn handle_keyboard_input(
     keys: Res<Input<KeyCode>>,
     mut translation_events: EventWriter<TranslationEvent>,
 ) {
-
     // let (forward, right, up) = (
     //     (look.forward * xz).normalize(),
     //     (look.right * xz).normalize(),
     //     Vec3::Y,
     // );
 
-    let forward = Vec3::Z;
+    let forward = -Vec3::Z;
     let right = Vec3::X;
     let up = Vec3::Y;
 
@@ -60,7 +59,6 @@ fn handle_keyboard_input(
 
     // println!("d {}", desired_velocity);
     translation_events.send(TranslationEvent::new(&desired_velocity))
-
 }
 
 fn handle_translation_events(

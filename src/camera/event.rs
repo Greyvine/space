@@ -1,5 +1,5 @@
-use std::ops::Deref;
 use bevy::prelude::*;
+use std::ops::Deref;
 
 #[derive(Debug, Default)]
 pub struct RotationEvent {
