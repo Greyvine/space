@@ -4,7 +4,7 @@ use bevy::{
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
 
-use space::camera::*;
+use space::{camera::*, controller::{tag::ControllerPlayerTag, ControllerPlugin}};
 use space::scale::*;
 use space::camera::tag::*;
 
@@ -23,6 +23,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
         .add_plugin(CameraPlugin)
+        .add_plugin(ControllerPlugin)
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 0.1,
@@ -47,22 +48,26 @@ fn setup(
         ..Default::default()
     });
 
-    commands
+    let player = commands
         .spawn_bundle(PbrBundle {
             mesh: cube_handle,
             material: cube_material_handle,
             transform: Transform::from_scale(dimensions),
             ..Default::default()
         })
-        .insert(Wireframe);
+        .insert(Wireframe)
+        .insert(ControllerPlayerTag)
+        .id();
 
-    commands
+    let camera = commands
         .spawn_bundle(PerspectiveCameraBundle {
             transform: Transform::from_translation(Vec3::new(0.0, 2.0, 15.0))
                 .looking_at(Vec3::ZERO, Vec3::Y),
             ..Default::default()
         })
-        .insert(PlayerTag);
+        .insert(PlayerTag)
+        .id();
+    
 }
 
 fn spawn_marker(
