@@ -4,8 +4,8 @@ use bevy::{
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
 
-use space::camera::tag::*;
 use space::scale::*;
+use space::{camera::tag::*, planet::spawn_moon};
 use space::{
     camera::*,
     controller::{tag::ControllerPlayerTag, ControllerPlugin},
@@ -31,8 +31,10 @@ fn main() {
             color: Color::WHITE,
             brightness: 0.1,
         })
+        .insert_resource(ClearColor(Color::BLACK))
         .add_startup_system(setup.system())
-        .add_startup_system(spawn_marker.system())
+        // .add_startup_system(spawn_marker.system())
+        .add_startup_system(spawn_moon.system())
         .run();
 }
 
@@ -70,6 +72,11 @@ fn setup(
         .spawn_bundle(PerspectiveCameraBundle {
             transform: Transform::from_translation(Vec3::new(0.0, 2.0, 15.0))
                 .looking_at(Vec3::ZERO, Vec3::Y),
+            perspective_projection: PerspectiveProjection {
+                far: 10.0 * AU_TO_UNIT_SCALE,
+                // near: 0.5 * AU_TO_UNIT_SCALE,
+                ..Default::default()
+            },
             ..Default::default()
         })
         .insert(CameraTag)
