@@ -4,7 +4,7 @@ use bevy::{
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
 
-use space::scale::*;
+use space::{scale::*, planet::{spawn_earth, EarthTag}};
 use space::{camera::tag::*, planet::spawn_moon};
 use space::{
     camera::*,
@@ -35,6 +35,8 @@ fn main() {
         .add_startup_system(setup.system())
         // .add_startup_system(spawn_marker.system())
         .add_startup_system(spawn_moon.system())
+        .add_startup_system(spawn_earth.system())
+        .add_system(rotator_system.system())
         .run();
 }
 
@@ -106,4 +108,10 @@ fn spawn_marker(
             ..Default::default()
         })
         .insert(Wireframe);
+}
+
+fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<EarthTag>>) {
+    for mut transform in query.iter_mut() {
+        transform.rotation *= Quat::from_rotation_y(0.05 * time.delta_seconds());
+    }
 }
