@@ -50,7 +50,7 @@ fn handle_mouse_input(
 
 fn handle_rotation_events(
     mut events: EventReader<RotationEvent>,
-    mut query: Query<&mut Transform, With<PlayerTag>>,
+    mut query: Query<&mut Transform, With<CameraTag>>,
 ) {
     if let Some(event) = events.iter().next() {
         for mut transform in query.iter_mut() {

@@ -50,7 +50,7 @@ fn handle_keyboard_input(
     }
 
     let speed = if keys.pressed(KeyCode::LShift) {
-        200.0
+        2.0
     } else {
         0.5
     };

@@ -4,12 +4,11 @@ use bevy::{
     render::{camera::PerspectiveProjection, options::WgpuOptions, render_resource::WgpuFeatures},
 };
 
+use space::scale::*;
+
 #[derive(Component)]
 pub struct FirstPassCube;
 
-const AU_TO_UNIT_SCALE: f32 = 149_597_870_700.0 * M_TO_UNIT_SCALE;
-const KM_TO_UNIT_SCALE: f32 = 1_000.0 * M_TO_UNIT_SCALE;
-const M_TO_UNIT_SCALE: f32 = 1.0;
 const RADIUS: f32 = 695_508.0 * KM_TO_UNIT_SCALE;
 
 fn main() {

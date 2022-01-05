@@ -72,7 +72,7 @@ fn setup(
                 .looking_at(Vec3::ZERO, Vec3::Y),
             ..Default::default()
         })
-        .insert(PlayerTag)
+        .insert(CameraTag)
         .id();
 
     commands.entity(body).push_children(&[player, camera]);
