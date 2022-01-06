@@ -4,11 +4,19 @@ use bevy::{
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
 
-use space::{scale::*, planet::{spawn_earth, EarthTag}};
-use space::{camera::tag::*, planet::spawn_moon};
+use space::{
+    camera::tag::*,
+    origin::{OriginRebasingPlugin, SimulationBundle},
+    planet::spawn_moon,
+    tag::PlayerTag,
+};
 use space::{
     camera::*,
     controller::{tag::ControllerPlayerTag, ControllerPlugin},
+};
+use space::{
+    planet::{spawn_earth, EarthTag},
+    scale::*,
 };
 
 #[derive(Component)]
@@ -27,6 +35,7 @@ fn main() {
         .add_plugin(WireframePlugin)
         .add_plugin(CameraPlugin)
         .add_plugin(ControllerPlugin)
+        .add_plugin(OriginRebasingPlugin)
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 0.1,
@@ -58,6 +67,8 @@ fn setup(
     let body = commands
         .spawn_bundle((GlobalTransform::identity(), Transform::identity()))
         .insert(ControllerPlayerTag)
+        .insert(PlayerTag)
+        .insert_bundle(SimulationBundle::default())
         .id();
 
     let player = commands

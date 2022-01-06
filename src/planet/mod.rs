@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::scale::KM_TO_UNIT_SCALE;
+use crate::{origin::SimulationBundle, scale::KM_TO_UNIT_SCALE, tag::NonPlayerTag};
 
 pub fn spawn_moon(
     asset_server: Res<AssetServer>,
@@ -23,12 +23,15 @@ pub fn spawn_moon(
         subdivisions: 10,
     }));
 
-    commands.spawn_bundle(PbrBundle {
-        mesh: sphere_handle,
-        material: material_handle,
-        transform: Transform::from_translation(Vec3::Z * radius * 2.0),
-        ..Default::default()
-    });
+    commands
+        .spawn_bundle(PbrBundle {
+            mesh: sphere_handle,
+            material: material_handle,
+            transform: Transform::from_translation(Vec3::Z * radius * 2.0),
+            ..Default::default()
+        })
+        .insert(NonPlayerTag)
+        .insert_bundle(SimulationBundle::new(Vec3::Z * radius * 2.0));
 }
 
 #[derive(Component)]
@@ -55,10 +58,17 @@ pub fn spawn_earth(
         subdivisions: 10,
     }));
 
-    commands.spawn_bundle(PbrBundle {
-        mesh: sphere_handle,
-        material: material_handle,
-        transform: Transform::from_translation(Vec3::new(radius * 2.0, 0.0, -radius * 10.0)),
-        ..Default::default()
-    }).insert(EarthTag);
+    commands
+        .spawn_bundle(PbrBundle {
+            mesh: sphere_handle,
+            material: material_handle,
+            ..Default::default()
+        })
+        .insert(EarthTag)
+        .insert(NonPlayerTag)
+        .insert_bundle(SimulationBundle::new(Vec3::new(
+            radius * 2.0,
+            0.0,
+            -radius * 10.0,
+        )));
 }
