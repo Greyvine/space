@@ -34,6 +34,13 @@ impl SimulationBundle {
             simulation_coordinates: SimulationCoordinates::from(pos),
         }
     }
+
+    pub fn from_transform(transform: Transform) -> Self {
+        Self {
+            transform: transform,
+            simulation_coordinates: SimulationCoordinates::from(transform.translation),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -55,7 +62,6 @@ fn sync_simulation_coordinates(
     let mut shift = Vec3::ZERO;
 
     for (transform, mut simulation_transform) in q.q0().iter_mut() {
-        println!("{}", transform.translation);
         simulation_transform.local_translation = transform.translation;
         if transform.translation.x < -MAX_BOUND {
             simulation_transform.local_translation.x += 2.0 * MAX_BOUND;
