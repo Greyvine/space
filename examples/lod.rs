@@ -6,9 +6,10 @@ use bevy::{
 
 use space::{
     camera::tag::*,
+    lod::*,
     origin::{OriginRebasingPlugin, SimulationBundle},
     planet::spawn_moon,
-    tag::PlayerTag, lod::{lod_system, LodBundle, LodTag},
+    tag::PlayerTag,
 };
 use space::{
     camera::*,
@@ -104,29 +105,64 @@ fn spawn_monkey(
     asset_server.load_folder("models/monkey").unwrap();
 
     // Then any asset in the folder can be accessed like this:
-    let monkey_handle = asset_server.get_handle("models/monkey/Monkey-low.gltf#Mesh0/Primitive0");
+    let monkey_low_handle =
+        asset_server.get_handle("models/monkey/Monkey-low.gltf#Mesh0/Primitive0");
+    let monkey_med_handle =
+        asset_server.get_handle("models/monkey/Monkey-medium.gltf#Mesh0/Primitive0");
+    let monkey_high_handle =
+        asset_server.get_handle("models/monkey/Monkey-high.gltf#Mesh0/Primitive0");
 
     let material_handle = materials.add(StandardMaterial {
         base_color: Color::rgb(0.8, 0.7, 0.6),
         ..Default::default()
     });
 
-    // monkey
-    commands
-        .spawn_bundle(PbrBundle {
-            mesh: monkey_handle,
-            material: material_handle.clone(),
-            transform: Transform::from_xyz(-20.0, 0.0, -10.0),
-            ..Default::default()
-        })
-        .insert_bundle(SimulationBundle::from_transform(Transform::from_scale(
-            Vec3::splat(3.0),
-        )))
+    let body = commands
+        .spawn_bundle((GlobalTransform::identity(), Transform::identity()))
+        .insert_bundle(SimulationBundle::default())
+        .insert(LodTag)
         .insert(LodBundle::new(
             "models/monkey/Monkey.gltf#Mesh0/Primitive0".to_string(),
             "models/monkey/Monkey-medium.gltf#Mesh0/Primitive0".to_string(),
             "models/monkey/Monkey-low.gltf#Mesh0/Primitive0".to_string(),
         ))
-        .insert(Wireframe)
-        .insert(LodTag);
+        .id();
+
+    // monkey
+    let monkey_low = commands
+        .spawn_bundle(PbrBundle {
+            mesh: monkey_low_handle,
+            material: material_handle.clone(),
+            transform: Transform::from_scale(Vec3::splat(3.0)),
+            visibility: Visibility { is_visible: false },
+            ..Default::default()
+        }).insert(LodLowTag)
+        // .insert(Wireframe)
+        .id();
+
+    let monkey_medium = commands
+        .spawn_bundle(PbrBundle {
+            mesh: monkey_med_handle,
+            material: material_handle.clone(),
+            transform: Transform::from_scale(Vec3::splat(3.0)),
+            visibility: Visibility { is_visible: false },
+            ..Default::default()
+        }).insert(LodMedTag)
+        // .insert(Wireframe)
+        .id();
+
+    let monkey_high = commands
+        .spawn_bundle(PbrBundle {
+            mesh: monkey_high_handle,
+            material: material_handle.clone(),
+            transform: Transform::from_scale(Vec3::splat(3.0)),
+            visibility: Visibility { is_visible: false },
+            ..Default::default()
+        }).insert(LodHighTag)
+        // .insert(Wireframe)
+        .id();
+
+    commands
+        .entity(body)
+        .push_children(&[monkey_high, monkey_medium, monkey_low]);
 }
