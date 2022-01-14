@@ -92,10 +92,12 @@ fn setup(
             },
             ..Default::default()
         })
-        .insert(CameraTag)
+        .insert_bundle((LookDirection::default(), CameraTag))
         .id();
 
-    commands.entity(body).push_children(&[player, camera]);
+    commands.entity(body)
+        .insert(LookEntity(camera))
+        .push_children(&[player, camera]);
 }
 
 fn spawn_marker(
