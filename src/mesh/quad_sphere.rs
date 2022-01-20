@@ -95,15 +95,20 @@ fn create_face(
             let vertex_index = x + y * subdivisions;
             let t = Vec2::new(x as f32, y as f32) / (subdivisions as f32 - 1.0);
             let point = normal + axis_a * (2.0 * t.x - 1.0) + axis_b * (2.0 * t.y - 1.0);
-            // let point_n = point.clone().normalize();
-            let point_n =
-                point.clone() / (point.x * point.x + point.y * point.y + point.z * point.z).sqrt();
-            vertices[vertex_index] = [point_n.x, point_n.y, point_n.z];
-            normals[vertex_index] = [
-                point.x * length_inv,
-                point.y * length_inv,
-                point.z * length_inv,
-            ];
+
+            // let point_n = point.clone() / (point.x * point.x + point.y * point.y + point.z * point.z).sqrt();
+            let point_n = map_cube_to_sphere(point);
+            let point_v = point_n * radius;
+
+            normals[vertex_index] = [point_n.x, point_n.y, point_n.z];
+            vertices[vertex_index] = [point_v.x, point_v.y, point_v.z];
+
+            // vertices[vertex_index] = [point.x, point.y, point.z];
+            // normals[vertex_index] = [
+            //     point.x * length_inv,
+            //     point.y * length_inv,
+            //     point.z * length_inv,
+            // ];
             uvs[vertex_index] = [
                 (y as f32) / subdivisions as f32,
                 (x as f32) / subdivisions as f32,
@@ -121,4 +126,15 @@ fn create_face(
     }
 
     (vertices, normals, uvs, indices)
+}
+
+fn map_cube_to_sphere(point: Vec3) -> Vec3 {
+    let x2 = point.x.powi(2);
+    let y2 = point.y.powi(2);
+    let z2 = point.z.powi(2);
+    return Vec3::new(
+        point.x * (1.0 - y2 / 2.0 - z2 / 2.0 + y2 * z2 / 3.0).sqrt(),
+        point.y * (1.0 - x2 / 2.0 - z2 / 2.0 + x2 * z2 / 3.0).sqrt(),
+        point.z * (1.0 - x2 / 2.0 - y2 / 2.0 + x2 * y2 / 3.0).sqrt(),
+    );
 }
