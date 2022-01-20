@@ -77,7 +77,8 @@ fn update_look_direction(
     if let Some(event) = events.iter().next() {
         for mut look in query.iter_mut() {
             let rotation = **event;
-            let rotation_matrix = Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
+            let rotation_matrix =
+                Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
 
             look.forward = rotation_matrix * -Vec3::Z;
             look.right = rotation_matrix * Vec3::X;

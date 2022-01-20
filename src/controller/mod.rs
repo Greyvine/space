@@ -1,9 +1,9 @@
 mod event;
 pub mod tag;
 
-use crate::HANDLE_INPUT_SYSTEM;
 use crate::camera::LookDirection;
 use crate::camera::LookEntity;
+use crate::HANDLE_INPUT_SYSTEM;
 
 use self::event::*;
 use self::tag::*;
@@ -70,7 +70,6 @@ fn handle_keyboard_input(
 
         translation_events.send(TranslationEvent::new(&desired_velocity))
     }
-
 }
 
 fn handle_translation_events(

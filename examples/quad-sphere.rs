@@ -6,6 +6,7 @@ use bevy::{
 
 use space::{
     camera::tag::*,
+    mesh::QuadSphere,
     origin::{OriginRebasingPlugin, SimulationBundle},
     planet::spawn_moon,
     tag::PlayerTag,
@@ -42,10 +43,7 @@ fn main() {
         })
         .insert_resource(ClearColor(Color::BLACK))
         .add_startup_system(setup.system())
-        // .add_startup_system(spawn_marker.system())
-        .add_startup_system(spawn_moon.system())
-        .add_startup_system(spawn_earth.system())
-        .add_system(rotator_system.system())
+        .add_startup_system(spawn_marker.system())
         .run();
 }
 
@@ -106,7 +104,10 @@ fn spawn_marker(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
+    let cube_handle = meshes.add(Mesh::from(QuadSphere {
+        radius: 10.0,
+        subdivisions: 10,
+    }));
     let cube_material_handle = materials.add(StandardMaterial {
         base_color: Color::RED,
         reflectance: 0.02,
@@ -122,10 +123,4 @@ fn spawn_marker(
             ..Default::default()
         })
         .insert(Wireframe);
-}
-
-fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<EarthTag>>) {
-    for mut transform in query.iter_mut() {
-        transform.rotation *= Quat::from_rotation_y(0.05 * time.delta_seconds());
-    }
 }
