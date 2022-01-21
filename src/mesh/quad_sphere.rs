@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::{
     prelude::*,
     render::{mesh::Indices, render_resource::PrimitiveTopology},
@@ -78,8 +80,6 @@ fn create_face(
     subdivisions: usize,
     offset: usize,
 ) -> (Vec<[f32; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>, Vec<u32>) {
-    let length_inv = 1. / radius;
-
     let axis_a = Vec3::new(normal.y, normal.z, normal.x);
     let axis_b = normal.cross(axis_a);
 
@@ -96,23 +96,22 @@ fn create_face(
             let t = Vec2::new(x as f32, y as f32) / (subdivisions as f32 - 1.0);
             let point = normal + axis_a * (2.0 * t.x - 1.0) + axis_b * (2.0 * t.y - 1.0);
 
-            // let point_n = point.clone() / (point.x * point.x + point.y * point.y + point.z * point.z).sqrt();
+            // let point_n = point.clone().normalize();
             let point_n = map_cube_to_sphere(point);
             let point_v = point_n * radius;
 
             normals[vertex_index] = [point_n.x, point_n.y, point_n.z];
             vertices[vertex_index] = [point_v.x, point_v.y, point_v.z];
 
-            // vertices[vertex_index] = [point.x, point.y, point.z];
-            // normals[vertex_index] = [
-            //     point.x * length_inv,
-            //     point.y * length_inv,
-            //     point.z * length_inv,
+            // uvs[vertex_index] = [
+            //     ((subdivisions - y) as f32) / subdivisions as f32,
+            //     ((subdivisions - x) as f32) / subdivisions as f32,
             // ];
-            uvs[vertex_index] = [
-                (y as f32) / subdivisions as f32,
-                (x as f32) / subdivisions as f32,
-            ];
+
+            // uvs[vertex_index] = convert_coordinate_to_uv(map_sphere_to_coordinate(point_n));
+            uvs[vertex_index] = test(point_n);
+            println!("{:?}", uvs[vertex_index]);
+
             if x != subdivisions - 1 && y != subdivisions - 1 {
                 indices[indices_index + 0] = (offset + vertex_index) as u32;
                 indices[indices_index + 1] = (offset + vertex_index + subdivisions + 1) as u32;
@@ -137,4 +136,18 @@ fn map_cube_to_sphere(point: Vec3) -> Vec3 {
         point.y * (1.0 - x2 / 2.0 - z2 / 2.0 + x2 * z2 / 3.0).sqrt(),
         point.z * (1.0 - x2 / 2.0 - y2 / 2.0 + x2 * y2 / 3.0).sqrt(),
     );
+}
+
+fn map_sphere_to_coordinate(point: Vec3) -> Vec2 {
+    let latitude = point.y.asin();
+    let longitude = point.x.atan2(-point.z);
+    Vec2::new(latitude, longitude)
+}
+
+fn convert_coordinate_to_uv(coordinate: Vec2) -> [f32; 2] {
+    [coordinate.x.cos(), coordinate.y.sin()]
+}
+
+fn test(point: Vec3) -> [f32; 2] {
+    [point.x.atan2(point.z) / PI * 0.5 + 0.5, 0.5 - point.y.asin() / PI]
 }

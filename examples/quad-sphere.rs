@@ -100,27 +100,31 @@ fn setup(
 }
 
 fn spawn_marker(
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let cube_handle = meshes.add(Mesh::from(QuadSphere {
+    let texture_handle = asset_server.load("textures/earth.png");
+
+    let sphere_handle = meshes.add(Mesh::from(QuadSphere {
         radius: 10.0,
-        subdivisions: 10,
+        subdivisions: 40,
     }));
-    let cube_material_handle = materials.add(StandardMaterial {
-        base_color: Color::RED,
-        reflectance: 0.02,
-        unlit: false,
+
+    let material_handle = materials.add(StandardMaterial {
+        // base_color: Color::RED,
+        base_color_texture: Some(texture_handle.clone()),
+        alpha_mode: AlphaMode::Blend,
+        unlit: true,
         ..Default::default()
     });
 
     commands
         .spawn_bundle(PbrBundle {
-            mesh: cube_handle,
-            material: cube_material_handle,
+            mesh: sphere_handle,
+            material: material_handle,
             transform: Transform::from_translation(Vec3::Z * -15.0),
             ..Default::default()
-        })
-        .insert(Wireframe);
+        });
 }
