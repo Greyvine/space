@@ -1,5 +1,8 @@
 mod event;
+mod look_direction;
+mod look_entity;
 mod mouse_settings;
+
 pub mod tag;
 
 use bevy::input::mouse::MouseMotion;
@@ -9,6 +12,9 @@ use self::event::*;
 use self::mouse_settings::MouseSettings;
 use self::tag::*;
 
+pub use self::look_direction::*;
+pub use self::look_entity::*;
+
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
@@ -16,7 +22,8 @@ impl Plugin for CameraPlugin {
         app.init_resource::<MouseSettings>()
             .add_event::<RotationEvent>()
             .add_system(handle_mouse_input.system())
-            .add_system(handle_rotation_events.system());
+            .add_system(handle_rotation_events.system())
+            .add_system(update_look_direction);
     }
 }
 
@@ -59,6 +66,23 @@ fn handle_rotation_events(
                 Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
             let rotation_matrix = Mat3::from_quat(transform.rotation);
             transform.translation = rotation_matrix.mul_vec3(Vec3::new(0.0, 1.0, 15.0));
+        }
+    }
+}
+
+fn update_look_direction(
+    mut events: EventReader<RotationEvent>,
+    mut query: Query<&mut LookDirection>,
+) {
+    if let Some(event) = events.iter().next() {
+        for mut look in query.iter_mut() {
+            let rotation = **event;
+            let rotation_matrix =
+                Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
+
+            look.forward = rotation_matrix * -Vec3::Z;
+            look.right = rotation_matrix * Vec3::X;
+            look.up = rotation_matrix * Vec3::Y;
         }
     }
 }

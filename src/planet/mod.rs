@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{origin::SimulationBundle, scale::KM_TO_UNIT_SCALE, tag::NonPlayerTag};
+use crate::{
+    mesh::QuadSphere, origin::SimulationBundle, scale::KM_TO_UNIT_SCALE, tag::NonPlayerTag,
+};
 
 pub fn spawn_moon(
     asset_server: Res<AssetServer>,
@@ -55,7 +57,7 @@ pub fn spawn_earth(
 
     let sphere_handle = meshes.add(Mesh::from(shape::Icosphere {
         radius,
-        subdivisions: 10,
+        subdivisions: 3,
     }));
 
     commands
