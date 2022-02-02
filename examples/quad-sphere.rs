@@ -1,4 +1,7 @@
+use std::f32::consts::PI;
+
 use bevy::{
+    input::system::exit_on_esc_system,
     pbr::wireframe::{Wireframe, WireframePlugin},
     prelude::*,
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
@@ -8,17 +11,13 @@ use space::{
     camera::tag::*,
     mesh::QuadSphere,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    planet::spawn_moon,
     tag::PlayerTag,
 };
 use space::{
     camera::*,
     controller::{tag::ControllerPlayerTag, ControllerPlugin},
 };
-use space::{
-    planet::{spawn_earth, EarthTag},
-    scale::*,
-};
+use space::{planet::EarthTag, scale::*};
 
 #[derive(Component)]
 pub struct Player;
@@ -42,8 +41,10 @@ fn main() {
             brightness: 0.1,
         })
         .insert_resource(ClearColor(Color::BLACK))
-        .add_startup_system(setup.system())
-        .add_startup_system(spawn_marker.system())
+        .add_startup_system(setup)
+        .add_startup_system(spawn_marker)
+        // .add_system(rotator_system)
+        .add_system(exit_on_esc_system)
         .run();
 }
 
@@ -105,12 +106,26 @@ fn spawn_marker(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let texture_handle = asset_server.load("textures/earth.png");
+    let _ = asset_server.watch_for_changes();
+
+    // let texture_handle = asset_server.load("textures/uv-check-square-low.png");
+    let texture_handle = asset_server.load("textures/earth-low.png");
 
     let sphere_handle = meshes.add(Mesh::from(QuadSphere {
-        radius: 10.0,
-        subdivisions: 40,
+        radius: 20.0,
+        subdivisions: 3,
     }));
+
+    // let sphere_handle = meshes.add(Mesh::from(shape::UVSphere {
+    //     radius: 20.0,
+    //     sectors: 5,
+    //     stacks: 5,
+    // }));
+
+    // let sphere_handle = meshes.add(Mesh::from(shape::Icosphere {
+    //     radius: 20.0,
+    //     subdivisions: 30,
+    // }));
 
     let material_handle = materials.add(StandardMaterial {
         // base_color: Color::RED,
@@ -124,7 +139,17 @@ fn spawn_marker(
         .spawn_bundle(PbrBundle {
             mesh: sphere_handle,
             material: material_handle,
-            transform: Transform::from_translation(Vec3::Z * -15.0),
+            // transform: Transform::from_translation(Vec3::Z * -20.0),
+            transform: Transform::from_translation(Vec3::Z * -20.0),
+            // .with_rotation(Quat::from_rotation_y(PI)),
             ..Default::default()
-        });
+        })
+        // .insert(Wireframe)
+        .insert(EarthTag);
+}
+
+fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<EarthTag>>) {
+    for mut transform in query.iter_mut() {
+        transform.rotation *= Quat::from_rotation_y(0.5 * time.delta_seconds());
+    }
 }
