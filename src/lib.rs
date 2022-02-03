@@ -1,6 +1,7 @@
 pub mod camera;
 pub mod controller;
 pub mod label;
+pub mod material;
 pub mod mesh;
 pub mod origin;
 pub mod planet;
