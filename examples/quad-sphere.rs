@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use bevy::{
     input::system::exit_on_esc_system,
     pbr::wireframe::{Wireframe, WireframePlugin},
@@ -9,6 +7,7 @@ use bevy::{
 
 use space::{
     camera::tag::*,
+    material::{convert_skyboxes, CustomMaterial, SkyboxTextureConversion},
     mesh::QuadSphere,
     origin::{OriginRebasingPlugin, SimulationBundle},
     tag::PlayerTag,
@@ -27,6 +26,7 @@ pub struct Planet;
 
 fn main() {
     App::new()
+        .init_resource::<SkyboxTextureConversion>()
         .insert_resource(WgpuOptions {
             features: WgpuFeatures::POLYGON_MODE_LINE,
             ..Default::default()
@@ -36,15 +36,17 @@ fn main() {
         .add_plugin(CameraPlugin)
         .add_plugin(ControllerPlugin)
         .add_plugin(OriginRebasingPlugin)
+        .add_plugin(MaterialPlugin::<CustomMaterial>::default())
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 0.1,
         })
-        .insert_resource(ClearColor(Color::BLACK))
+        // .insert_resource(ClearColor(Color::BLACK))
         .add_startup_system(setup)
         .add_startup_system(spawn_marker)
-        // .add_system(rotator_system)
+        .add_system(rotator_system)
         .add_system(exit_on_esc_system)
+        .add_system(convert_skyboxes)
         .run();
 }
 
@@ -104,16 +106,20 @@ fn spawn_marker(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<CustomMaterial>>,
+    mut skybox_conversion: ResMut<SkyboxTextureConversion>,
 ) {
-    let _ = asset_server.watch_for_changes();
+    let texture_handle = asset_server.load("textures/earth-cube-map.png");
+    skybox_conversion.make_array(texture_handle.clone());
 
-    // let texture_handle = asset_server.load("textures/uv-check-square-low.png");
-    let texture_handle = asset_server.load("textures/earth-low.png");
+    let material = CustomMaterial {
+        base_color_texture: Some(texture_handle.clone()),
+        color: Color::GREEN,
+    };
 
     let sphere_handle = meshes.add(Mesh::from(QuadSphere {
         radius: 20.0,
-        subdivisions: 3,
+        subdivisions: 30,
     }));
 
     // let sphere_handle = meshes.add(Mesh::from(shape::UVSphere {
@@ -127,20 +133,12 @@ fn spawn_marker(
     //     subdivisions: 30,
     // }));
 
-    let material_handle = materials.add(StandardMaterial {
-        // base_color: Color::RED,
-        base_color_texture: Some(texture_handle.clone()),
-        alpha_mode: AlphaMode::Blend,
-        unlit: true,
-        ..Default::default()
-    });
-
     commands
-        .spawn_bundle(PbrBundle {
+        .spawn_bundle(MaterialMeshBundle {
             mesh: sphere_handle,
-            material: material_handle,
+            material: materials.add(material),
             // transform: Transform::from_translation(Vec3::Z * -20.0),
-            transform: Transform::from_translation(Vec3::Z * -20.0),
+            transform: Transform::from_xyz(0.0, 0.0, -30.0),
             // .with_rotation(Quat::from_rotation_y(PI)),
             ..Default::default()
         })
