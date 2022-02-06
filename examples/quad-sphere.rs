@@ -27,10 +27,6 @@ pub struct Planet;
 fn main() {
     App::new()
         .init_resource::<SkyboxTextureConversion>()
-        .insert_resource(WgpuOptions {
-            features: WgpuFeatures::POLYGON_MODE_LINE,
-            ..Default::default()
-        })
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
         .add_plugin(CameraPlugin)

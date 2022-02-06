@@ -8,7 +8,7 @@ use space::{
     camera::tag::*,
     origin::{OriginRebasingPlugin, SimulationBundle},
     planet::spawn_moon,
-    tag::PlayerTag,
+    tag::PlayerTag, material::{CustomMaterial, SkyboxTextureConversion, convert_skyboxes},
 };
 use space::{
     camera::*,
@@ -27,6 +27,7 @@ pub struct Planet;
 
 fn main() {
     App::new()
+        .init_resource::<SkyboxTextureConversion>()
         .insert_resource(WgpuOptions {
             features: WgpuFeatures::POLYGON_MODE_LINE,
             ..Default::default()
@@ -36,6 +37,7 @@ fn main() {
         .add_plugin(CameraPlugin)
         .add_plugin(ControllerPlugin)
         .add_plugin(OriginRebasingPlugin)
+        .add_plugin(MaterialPlugin::<CustomMaterial>::default())
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 0.1,
@@ -46,6 +48,7 @@ fn main() {
         .add_startup_system(spawn_moon.system())
         .add_startup_system(spawn_earth.system())
         .add_system(rotator_system.system())
+        .add_system(convert_skyboxes.system())
         .run();
 }
 
