@@ -31,7 +31,7 @@ fn sampleCubeHacky(ray: vec4<f32>) -> vec3<f32> {
             array_index = 4;
         }
         maxAdjust = 0.5 / rayAbs.z;
-        uv = vec2<f32>(ray.x * -sign(ray.z), -ray.y);
+        uv = vec2<f32>(-ray.x * -sign(ray.z), -ray.y);
     }
     else if (rayAbs.y >= rayAbs.x) {
         if (ray.y < 0.0) {
@@ -40,16 +40,16 @@ fn sampleCubeHacky(ray: vec4<f32>) -> vec3<f32> {
             array_index = 2;
         }
         maxAdjust = 0.5 / ray.y;
-        uv = vec2<f32>(ray.x * sign(ray.y), -ray.z);
+        uv = vec2<f32>(-ray.x * sign(ray.y), -ray.z);
     }
     else {
         if (ray.x < 0.0) {
-            array_index = 1;
-        } else {
             array_index = 0;
+        } else {
+            array_index = 1;
         }
         maxAdjust = 0.5 / ray.x;
-        uv = vec2<f32>(ray.z, ray.y * -sign(ray.x));
+        uv = vec2<f32>(-ray.z, ray.y * -sign(ray.x));
     }
     return vec3<f32>(uv.x * maxAdjust + 0.5, uv.y * maxAdjust + 0.5, f32(array_index));
 }
