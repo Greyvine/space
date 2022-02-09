@@ -85,8 +85,19 @@ fn fragment(in: VertexOutput) -> [[location(0)]] vec4<f32> {
 
 [[stage(vertex)]]
 fn vertex(vertex: Vertex) -> VertexOutput {
-    let world_position = mesh.model * vec4<f32>(vertex.position, 1.0);
 
+    let vertex_position = vec4<f32>(vertex.position, 1.0);
+
+    let uv_index = sampleCubeHacky(vertex_position);
+    let uv = vec2<f32>(uv_index.x, uv_index.y);
+    let array_index: i32 = i32(uv_index.z);
+    let displacement = vec4<f32>(vertex.normal, 0.0) * textureSampleLevel(base_color_texture, base_color_sampler, uv, array_index, 0.0).x;
+
+    let displaced_position = vertex_position + displacement;
+    // gl_Position = projection * view * model * displacedPosition;
+
+    // let world_position = mesh.model * vertex_position;
+    let world_position = mesh.model * displaced_position;
     var out: VertexOutput;
     out.uv = vertex.uv;
     out.world_position = world_position;
@@ -96,7 +107,7 @@ fn vertex(vertex: Vertex) -> VertexOutput {
         mesh.inverse_transpose_model[1].xyz,
         mesh.inverse_transpose_model[2].xyz
     ) * vertex.normal;
-    out.vertex_position = vec4<f32>(vertex.position, 1.0);
+    out.vertex_position = vertex_position;
 
     return out;
 }

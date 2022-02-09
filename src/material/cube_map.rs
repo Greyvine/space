@@ -111,7 +111,7 @@ impl Material for CustomMaterial {
             entries: &[
                 BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT | ShaderStages::VERTEX,
                     ty: BindingType::Buffer {
                         ty: BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -122,7 +122,7 @@ impl Material for CustomMaterial {
                 // Base Color Texture
                 BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT | ShaderStages::VERTEX,
                     ty: BindingType::Texture {
                         multisampled: false,
                         sample_type: TextureSampleType::Float { filterable: true },
@@ -133,7 +133,7 @@ impl Material for CustomMaterial {
                 // Base Color Texture Sampler
                 BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT | ShaderStages::VERTEX,
                     ty: BindingType::Sampler(SamplerBindingType::Filtering),
                     count: None,
                 },
