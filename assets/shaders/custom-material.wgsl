@@ -77,10 +77,31 @@ var<uniform> mesh: Mesh;
 
 [[stage(fragment)]]
 fn fragment(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    let uvIndex = sampleCubeHacky(in.vertex_position);
-    let uv = vec2<f32>(uvIndex.x, uvIndex.y);
-    let array_index: i32 = i32(uvIndex.z);
-    return textureSample(base_color_texture, base_color_sampler, uv, array_index);
+
+    let dx = dpdx(in.vertex_position);
+    let dy = dpdy(in.vertex_position);
+    let normal = normalize(cross(dy, dx)).xyz;
+
+    let light_dir = normalize(vec3<f32>(1.0, -2.0, 3.0));
+    let light = dot(light_dir, normal);
+    let color = vec3<f32>(0.3, 1.0, 0.1);
+    
+    return vec4<f32>(color * (light * 0.5 + 0.5), 1.0);
+
+    // vec3 normal = normalize(cross(dy, dx));
+    
+    // // just hard code lightDir and color
+    // // to make it easy
+    // vec3 lightDir = normalize(vec3(1, -2, 3));
+    // float light = dot(lightDir, normal);
+    // vec3 color = vec3(0.3, 1, 0.1);
+    
+    // gl_FragColor = vec4(color * (light * 0.5 + 0.5), 1);
+
+    // let uvIndex = sampleCubeHacky(in.vertex_position);
+    // let uv = vec2<f32>(uvIndex.x, uvIndex.y);
+    // let array_index: i32 = i32(uvIndex.z);
+    // return textureSample(base_color_texture, base_color_sampler, uv, array_index);
 }
 
 [[stage(vertex)]]
@@ -91,7 +112,7 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     let uv_index = sampleCubeHacky(vertex_position);
     let uv = vec2<f32>(uv_index.x, uv_index.y);
     let array_index: i32 = i32(uv_index.z);
-    let displacement = vec4<f32>(vertex.normal, 0.0) * textureSampleLevel(base_color_texture, base_color_sampler, uv, array_index, 0.0).x;
+    let displacement = vec4<f32>(vertex.normal, 0.0) * textureSampleLevel(base_color_texture, base_color_sampler, uv, array_index, 0.0).x * 2.0;
 
     let displaced_position = vertex_position + displacement;
     // gl_Position = projection * view * model * displacedPosition;

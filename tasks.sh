@@ -5,7 +5,7 @@ set -euxo pipefail
 declare -r virtual_base_path=/imgs
 
 main() {
-    local -r file=/home/pepe/Pictures/planets/GRAY_HR_SR_OB_DR.tif
+    local -r file=/home/pepe/Pictures/planets/gebco_08_rev_elev_21600x10800.png
     local -r base_path=$(dirname "$file")
     local -r resolution=512
 
@@ -44,6 +44,7 @@ warp() {
             -overwrite \
             -wo SOURCE_EXTRA=100 \
             -wo SAMPLE_GRID=YES \
+            -to SRC_METHOD=NO_GEOTRANSFORM \
             -te -"$extent" -"$extent" "$extent" "$extent" \
             -ts "$res" "$res" \
             "$virtual_base_path/$input_base_name" "$virtual_base_path/$output"

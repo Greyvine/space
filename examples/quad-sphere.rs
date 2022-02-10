@@ -105,7 +105,7 @@ fn spawn_marker(
     mut materials: ResMut<Assets<CustomMaterial>>,
     mut skybox_conversion: ResMut<SkyboxTextureConversion>,
 ) {
-    let texture_handle = asset_server.load("textures/combined.png");
+    let texture_handle = asset_server.load("textures/height-cube-map-normalized.png");
     skybox_conversion.make_array(texture_handle.clone());
 
     let material = CustomMaterial {
