@@ -1,7 +1,11 @@
-use bevy::{prelude::*, pbr::wireframe::Wireframe};
+use bevy::{pbr::wireframe::Wireframe, prelude::*};
 
 use crate::{
-    mesh::QuadSphere, origin::SimulationBundle, scale::KM_TO_UNIT_SCALE, tag::NonPlayerTag, material::{CustomMaterial, SkyboxTextureConversion},
+    material::{CustomMaterial, SkyboxTextureConversion},
+    mesh::QuadSphere,
+    origin::SimulationBundle,
+    scale::KM_TO_UNIT_SCALE,
+    tag::NonPlayerTag,
 };
 
 pub fn spawn_moon(
@@ -48,10 +52,13 @@ pub fn spawn_earth(
 ) {
     let radius = 6_378.0 * KM_TO_UNIT_SCALE;
     let texture_handle = asset_server.load("textures/earth-cube-map.png");
+    let height_map_handle = asset_server.load("textures/height-cube-map-low.png");
     skybox_conversion.make_array(texture_handle.clone());
+    skybox_conversion.make_array(height_map_handle.clone());
 
     let material_handle = materials.add(CustomMaterial {
         base_color_texture: Some(texture_handle.clone()),
+        height_map_texture: Some(height_map_handle.clone()),
         color: Color::GREEN,
     });
 

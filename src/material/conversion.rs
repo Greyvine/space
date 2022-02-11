@@ -57,7 +57,6 @@ pub fn convert_skyboxes(
             None => break,
         };
 
-        println!("ASSSHOLE!!!");
         info!(
             "Reinterpreting as Skybox Texture {:?}: format: {:?}, len: {}, extents: {:?}",
             handle,

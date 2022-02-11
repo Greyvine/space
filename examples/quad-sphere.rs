@@ -105,11 +105,14 @@ fn spawn_marker(
     mut materials: ResMut<Assets<CustomMaterial>>,
     mut skybox_conversion: ResMut<SkyboxTextureConversion>,
 ) {
-    let texture_handle = asset_server.load("textures/height-cube-map-normalized.png");
+    let texture_handle = asset_server.load("textures/earth-cube-map.png");
+    let height_map_handle = asset_server.load("textures/height-cube-map-low.png");
     skybox_conversion.make_array(texture_handle.clone());
+    skybox_conversion.make_array(height_map_handle.clone());
 
     let material = CustomMaterial {
         base_color_texture: Some(texture_handle.clone()),
+        height_map_texture: Some(height_map_handle.clone()),
         color: Color::GREEN,
     };
 
@@ -117,17 +120,6 @@ fn spawn_marker(
         radius: 20.0,
         subdivisions: 30,
     }));
-
-    // let sphere_handle = meshes.add(Mesh::from(shape::UVSphere {
-    //     radius: 20.0,
-    //     sectors: 5,
-    //     stacks: 5,
-    // }));
-
-    // let sphere_handle = meshes.add(Mesh::from(shape::Icosphere {
-    //     radius: 20.0,
-    //     subdivisions: 30,
-    // }));
 
     commands
         .spawn_bundle(MaterialMeshBundle {
@@ -140,6 +132,11 @@ fn spawn_marker(
         })
         // .insert(Wireframe)
         .insert(EarthTag);
+
+    commands.spawn_bundle(PointLightBundle {
+        transform: Transform::from_xyz(4.0, 15.0, 4.0),
+        ..Default::default()
+    });
 }
 
 fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<EarthTag>>) {

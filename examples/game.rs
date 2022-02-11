@@ -6,9 +6,10 @@ use bevy::{
 
 use space::{
     camera::tag::*,
+    material::{convert_skyboxes, CustomMaterial, SkyboxTextureConversion},
     origin::{OriginRebasingPlugin, SimulationBundle},
     planet::spawn_moon,
-    tag::PlayerTag, material::{CustomMaterial, SkyboxTextureConversion, convert_skyboxes},
+    tag::PlayerTag,
 };
 use space::{
     camera::*,

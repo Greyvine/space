@@ -22,6 +22,7 @@ use bevy::{
 #[uuid = "4ee9c363-1124-4113-890e-199d81b00281"]
 pub struct CustomMaterial {
     pub base_color_texture: Option<Handle<Image>>,
+    pub height_map_texture: Option<Handle<Image>>,
     pub color: Color,
 }
 
@@ -63,6 +64,14 @@ impl RenderAsset for CustomMaterial {
         } else {
             return Err(PrepareAssetError::RetryNextUpdate(extracted_asset));
         };
+        let (height_map_texture_view, height_map_sampler) = if let Some(result) = material_pipeline
+            .mesh_pipeline
+            .get_image_texture(gpu_images, &extracted_asset.height_map_texture)
+        {
+            result
+        } else {
+            return Err(PrepareAssetError::RetryNextUpdate(extracted_asset));
+        };
         let bind_group = render_device.create_bind_group(&BindGroupDescriptor {
             entries: &[
                 BindGroupEntry {
@@ -76,6 +85,14 @@ impl RenderAsset for CustomMaterial {
                 BindGroupEntry {
                     binding: 2,
                     resource: BindingResource::Sampler(base_color_sampler),
+                },
+                BindGroupEntry {
+                    binding: 3,
+                    resource: BindingResource::TextureView(height_map_texture_view),
+                },
+                BindGroupEntry {
+                    binding: 4,
+                    resource: BindingResource::Sampler(height_map_sampler),
                 },
             ],
             label: None,
@@ -133,6 +150,24 @@ impl Material for CustomMaterial {
                 // Base Color Texture Sampler
                 BindGroupLayoutEntry {
                     binding: 2,
+                    visibility: ShaderStages::FRAGMENT | ShaderStages::VERTEX,
+                    ty: BindingType::Sampler(SamplerBindingType::Filtering),
+                    count: None,
+                },
+                // Base Color Texture
+                BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: ShaderStages::FRAGMENT | ShaderStages::VERTEX,
+                    ty: BindingType::Texture {
+                        multisampled: false,
+                        sample_type: TextureSampleType::Float { filterable: true },
+                        view_dimension: TextureViewDimension::D2Array,
+                    },
+                    count: None,
+                },
+                // Base Color Texture Sampler
+                BindGroupLayoutEntry {
+                    binding: 4,
                     visibility: ShaderStages::FRAGMENT | ShaderStages::VERTEX,
                     ty: BindingType::Sampler(SamplerBindingType::Filtering),
                     count: None,
