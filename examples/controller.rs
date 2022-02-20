@@ -41,11 +41,10 @@ fn main() {
         .add_startup_system(setup)
         .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
-        .add_startup_system(spawn_lights)
+        .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)
         .run();
 }
-
 
 fn setup(
     mut commands: Commands,
@@ -96,6 +95,7 @@ fn setup(
         .entity(body)
         .insert(LookEntity(camera))
         .push_children(&[player, camera]);
+
 }
 
 fn spawn_marker(
@@ -111,13 +111,12 @@ fn spawn_marker(
             unlit: false,
             ..Default::default()
         });
-        commands
-            .spawn_bundle(PbrBundle {
-                mesh: cube_handle.clone(),
-                material: cube_material_handle.clone(),
-                transform: Transform::from_translation(position),
-                ..Default::default()
-            });
+        commands.spawn_bundle(PbrBundle {
+            mesh: cube_handle.clone(),
+            material: cube_material_handle.clone(),
+            transform: Transform::from_translation(position),
+            ..Default::default()
+        });
         // .insert(Wireframe);
     };
 
@@ -129,7 +128,7 @@ fn spawn_marker(
     spawn_cube(Vec3::X * -15.0, Color::ORANGE);
 }
 
-fn spawn_lights(mut commands: Commands) {
+fn spawn_light(mut commands: Commands) {
     let theta = std::f32::consts::FRAC_PI_4;
     let light_transform = Mat4::from_euler(EulerRot::ZYX, 0.0, std::f32::consts::FRAC_PI_2, -theta);
     commands.spawn_bundle(DirectionalLightBundle {
@@ -154,4 +153,30 @@ fn spawn_lights(mut commands: Commands) {
     });
 }
 
-fn setup_crosshair(mut commands: Commands) {}
+fn setup_crosshair(mut commands: Commands) {
+    commands.spawn_bundle(UiCameraBundle::default());
+    commands
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..Default::default()
+            },
+            color: Color::NONE.into(),
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            parent.spawn_bundle(NodeBundle {
+                style: Style {
+                    size: Size::new(Val::Px(5.0), Val::Px(5.0)),
+                    position_type: PositionType::Absolute,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::FlexEnd,
+                    ..Default::default()
+                },
+                color: Color::rgb(1.0, 1.0, 1.0).into(),
+                ..Default::default()
+            });
+        });
+}
