@@ -7,7 +7,7 @@ use bevy::{
 use space::{
     camera::tag::*,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    tag::{PlayerModelTag, PlayerTag},
+    tag::{PlayerModelTag, PlayerTag}, util::setup_crosshair,
 };
 use space::{
     camera::*,
@@ -80,7 +80,7 @@ fn setup(
 
     let camera = commands
         .spawn_bundle(PerspectiveCameraBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, 2.0, 15.0))
+            transform: Transform::from_translation(Vec3::new(0.0, 2.25, 15.0))
                 .looking_at(Vec3::ZERO, Vec3::Y),
             perspective_projection: PerspectiveProjection {
                 far: 10.0 * AU_TO_UNIT_SCALE,
@@ -151,32 +151,4 @@ fn spawn_light(mut commands: Commands) {
         transform: Transform::from_matrix(light_transform),
         ..Default::default()
     });
-}
-
-fn setup_crosshair(mut commands: Commands) {
-    commands.spawn_bundle(UiCameraBundle::default());
-    commands
-        .spawn_bundle(NodeBundle {
-            style: Style {
-                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                ..Default::default()
-            },
-            color: Color::NONE.into(),
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            parent.spawn_bundle(NodeBundle {
-                style: Style {
-                    size: Size::new(Val::Px(5.0), Val::Px(5.0)),
-                    position_type: PositionType::Absolute,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::FlexEnd,
-                    ..Default::default()
-                },
-                color: Color::rgb(1.0, 1.0, 1.0).into(),
-                ..Default::default()
-            });
-        });
 }
