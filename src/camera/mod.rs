@@ -65,7 +65,7 @@ fn handle_rotation_events(
             transform.rotation =
                 Quat::from_rotation_y(rotation.x) * Quat::from_rotation_x(rotation.y);
             let rotation_matrix = Mat3::from_quat(transform.rotation);
-            transform.translation = rotation_matrix.mul_vec3(Vec3::new(0.0, 1.0, 15.0));
+            transform.translation = rotation_matrix.mul_vec3(Vec3::new(0.0, 2.25, 15.0));
         }
     }
 }

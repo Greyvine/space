@@ -7,7 +7,7 @@ use bevy::{
 use space::{
     camera::tag::*,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    tag::{PlayerModelTag, PlayerTag},
+    tag::{PlayerModelTag, PlayerTag}, util::setup_crosshair,
 };
 use space::{
     camera::*,
@@ -41,11 +41,10 @@ fn main() {
         .add_startup_system(setup)
         .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
-        .add_startup_system(spawn_lights)
+        .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)
         .run();
 }
-
 
 fn setup(
     mut commands: Commands,
@@ -81,7 +80,7 @@ fn setup(
 
     let camera = commands
         .spawn_bundle(PerspectiveCameraBundle {
-            transform: Transform::from_translation(Vec3::new(0.0, 2.0, 15.0))
+            transform: Transform::from_translation(Vec3::new(0.0, 2.25, 15.0))
                 .looking_at(Vec3::ZERO, Vec3::Y),
             perspective_projection: PerspectiveProjection {
                 far: 10.0 * AU_TO_UNIT_SCALE,
@@ -96,6 +95,7 @@ fn setup(
         .entity(body)
         .insert(LookEntity(camera))
         .push_children(&[player, camera]);
+
 }
 
 fn spawn_marker(
@@ -111,13 +111,12 @@ fn spawn_marker(
             unlit: false,
             ..Default::default()
         });
-        commands
-            .spawn_bundle(PbrBundle {
-                mesh: cube_handle.clone(),
-                material: cube_material_handle.clone(),
-                transform: Transform::from_translation(position),
-                ..Default::default()
-            });
+        commands.spawn_bundle(PbrBundle {
+            mesh: cube_handle.clone(),
+            material: cube_material_handle.clone(),
+            transform: Transform::from_translation(position),
+            ..Default::default()
+        });
         // .insert(Wireframe);
     };
 
@@ -129,7 +128,7 @@ fn spawn_marker(
     spawn_cube(Vec3::X * -15.0, Color::ORANGE);
 }
 
-fn spawn_lights(mut commands: Commands) {
+fn spawn_light(mut commands: Commands) {
     let theta = std::f32::consts::FRAC_PI_4;
     let light_transform = Mat4::from_euler(EulerRot::ZYX, 0.0, std::f32::consts::FRAC_PI_2, -theta);
     commands.spawn_bundle(DirectionalLightBundle {
@@ -153,5 +152,3 @@ fn spawn_lights(mut commands: Commands) {
         ..Default::default()
     });
 }
-
-fn setup_crosshair(mut commands: Commands) {}
