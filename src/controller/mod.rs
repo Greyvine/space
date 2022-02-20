@@ -44,24 +44,29 @@ fn handle_keyboard_input(
             Vec3::Y,
         );
 
+        let mut clamp_direction = false;
         let mut key_pressed = false;
 
         let mut desired_velocity = Vec3::ZERO;
         if keys.pressed(KeyCode::W) {
             desired_velocity += forward;
             key_pressed = true;
+            clamp_direction = true;
         }
         if keys.pressed(KeyCode::S) {
             desired_velocity -= forward;
             key_pressed = true;
+            clamp_direction = true;
         }
         if keys.pressed(KeyCode::D) {
             desired_velocity += right;
             key_pressed = true;
+            // clamp_direction = true;
         }
         if keys.pressed(KeyCode::A) {
             desired_velocity -= right;
             key_pressed = true;
+            // clamp_direction = true;
         }
         if keys.pressed(KeyCode::Q) {
             desired_velocity += up;
@@ -81,9 +86,11 @@ fn handle_keyboard_input(
         if key_pressed {
             desired_velocity *= speed;
 
-            let to_rotation = Transform::default().looking_at(forward, up).rotation;
+            if clamp_direction {
+                let rotation = Transform::default().looking_at(forward, up).rotation;
+                rotation_events.send(RotationEvent::new(&rotation));
+            }
 
-            rotation_events.send(RotationEvent::new(&to_rotation));
             translation_events.send(TranslationEvent::new(&desired_velocity))
         }
     }

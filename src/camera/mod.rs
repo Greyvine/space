@@ -63,7 +63,7 @@ fn handle_rotation_events(
         for mut transform in query.iter_mut() {
             let rotation = **event;
             transform.rotation =
-                Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
+                Quat::from_rotation_y(rotation.x) * Quat::from_rotation_x(rotation.y);
             let rotation_matrix = Mat3::from_quat(transform.rotation);
             transform.translation = rotation_matrix.mul_vec3(Vec3::new(0.0, 1.0, 15.0));
         }

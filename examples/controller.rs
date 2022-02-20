@@ -7,17 +7,13 @@ use bevy::{
 use space::{
     camera::tag::*,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    planet::spawn_moon,
     tag::{PlayerModelTag, PlayerTag},
 };
 use space::{
     camera::*,
     controller::{tag::ControllerPlayerTag, ControllerPlugin},
 };
-use space::{
-    planet::{spawn_earth, EarthTag},
-    scale::*,
-};
+use space::{scale::*, util::setup_cursor};
 
 #[derive(Component)]
 pub struct Player;
@@ -25,10 +21,16 @@ pub struct Player;
 #[derive(Component)]
 pub struct Planet;
 
+struct MyRaycastSet;
+
 fn main() {
     App::new()
         .insert_resource(WgpuOptions {
             features: WgpuFeatures::POLYGON_MODE_LINE,
+            ..Default::default()
+        })
+        .insert_resource(WindowDescriptor {
+            vsync: false,
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
@@ -36,14 +38,14 @@ fn main() {
         .add_plugin(CameraPlugin)
         .add_plugin(ControllerPlugin)
         .add_plugin(OriginRebasingPlugin)
-        .insert_resource(AmbientLight {
-            color: Color::WHITE,
-            brightness: 0.1,
-        })
         .add_startup_system(setup)
+        .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
+        .add_startup_system(spawn_lights)
+        .add_startup_system(setup_crosshair)
         .run();
 }
+
 
 fn setup(
     mut commands: Commands,
@@ -55,8 +57,7 @@ fn setup(
     let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
     let cube_material_handle = materials.add(StandardMaterial {
         base_color: Color::BLACK,
-        reflectance: 0.02,
-        unlit: false,
+        reflectance: 1.0,
         ..Default::default()
     });
 
@@ -75,7 +76,7 @@ fn setup(
             ..Default::default()
         })
         .insert(PlayerModelTag)
-        .insert(Wireframe)
+        // .insert(Wireframe)
         .id();
 
     let camera = commands
@@ -84,7 +85,6 @@ fn setup(
                 .looking_at(Vec3::ZERO, Vec3::Y),
             perspective_projection: PerspectiveProjection {
                 far: 10.0 * AU_TO_UNIT_SCALE,
-                // near: 0.5 * AU_TO_UNIT_SCALE,
                 ..Default::default()
             },
             ..Default::default()
@@ -103,10 +103,10 @@ fn spawn_marker(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mut spawn_cube = |position| {
+    let mut spawn_cube = |position, color| {
         let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
         let cube_material_handle = materials.add(StandardMaterial {
-            base_color: Color::RED,
+            base_color: color,
             reflectance: 0.02,
             unlit: false,
             ..Default::default()
@@ -117,12 +117,41 @@ fn spawn_marker(
                 material: cube_material_handle.clone(),
                 transform: Transform::from_translation(position),
                 ..Default::default()
-            })
-            .insert(Wireframe);
+            });
+        // .insert(Wireframe);
     };
 
-    spawn_cube(Vec3::Z * -15.0);
-    spawn_cube(Vec3::Z * 15.0);
-    spawn_cube(Vec3::X * -15.0);
-    spawn_cube(Vec3::X * 15.0);
+    spawn_cube(Vec3::Y * 15.0, Color::RED);
+    spawn_cube(Vec3::Y * -15.0, Color::ORANGE);
+    spawn_cube(Vec3::Z * 15.0, Color::RED);
+    spawn_cube(Vec3::Z * -15.0, Color::ORANGE);
+    spawn_cube(Vec3::X * 15.0, Color::RED);
+    spawn_cube(Vec3::X * -15.0, Color::ORANGE);
 }
+
+fn spawn_lights(mut commands: Commands) {
+    let theta = std::f32::consts::FRAC_PI_4;
+    let light_transform = Mat4::from_euler(EulerRot::ZYX, 0.0, std::f32::consts::FRAC_PI_2, -theta);
+    commands.spawn_bundle(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            illuminance: 100000.0,
+            shadow_projection: OrthographicProjection {
+                left: -0.35,
+                right: 500.35,
+                bottom: -0.1,
+                top: 5.0,
+                near: -5.0,
+                far: 5.0,
+                ..Default::default()
+            },
+            shadow_depth_bias: 0.0,
+            shadow_normal_bias: 0.0,
+            shadows_enabled: true,
+            ..Default::default()
+        },
+        transform: Transform::from_matrix(light_transform),
+        ..Default::default()
+    });
+}
+
+fn setup_crosshair(mut commands: Commands) {}
