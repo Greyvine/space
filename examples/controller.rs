@@ -7,7 +7,9 @@ use bevy::{
 use space::{
     camera::tag::*,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    tag::{PlayerModelTag, PlayerTag}, util::setup_crosshair,
+    raycast::{RayCastMesh, RaycastPlugin, RayCastSource},
+    tag::{PlayerModelTag, PlayerTag},
+    util::setup_crosshair,
 };
 use space::{
     camera::*,
@@ -38,6 +40,7 @@ fn main() {
         .add_plugin(CameraPlugin)
         .add_plugin(ControllerPlugin)
         .add_plugin(OriginRebasingPlugin)
+        .add_plugin(RaycastPlugin::<MyRaycastSet>::default())
         .add_startup_system(setup)
         .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
@@ -88,6 +91,7 @@ fn setup(
             },
             ..Default::default()
         })
+        .insert(RayCastSource::<MyRaycastSet>::new_transform_empty())
         .insert_bundle((LookDirection::default(), CameraTag))
         .id();
 
@@ -95,7 +99,6 @@ fn setup(
         .entity(body)
         .insert(LookEntity(camera))
         .push_children(&[player, camera]);
-
 }
 
 fn spawn_marker(
@@ -111,12 +114,14 @@ fn spawn_marker(
             unlit: false,
             ..Default::default()
         });
-        commands.spawn_bundle(PbrBundle {
-            mesh: cube_handle.clone(),
-            material: cube_material_handle.clone(),
-            transform: Transform::from_translation(position),
-            ..Default::default()
-        });
+        commands
+            .spawn_bundle(PbrBundle {
+                mesh: cube_handle.clone(),
+                material: cube_material_handle.clone(),
+                transform: Transform::from_translation(position),
+                ..Default::default()
+            })
+            .insert(RayCastMesh::<MyRaycastSet>::default());
         // .insert(Wireframe);
     };
 
