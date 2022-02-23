@@ -2,7 +2,7 @@ pub mod compute_ray;
 pub mod label;
 pub mod mesh;
 pub mod method;
-pub mod primitive;
+pub mod primitives;
 pub mod ray;
 pub mod source;
 pub mod state;

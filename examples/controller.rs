@@ -7,7 +7,7 @@ use bevy::{
 use space::{
     camera::tag::*,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    raycast::{RayCastMesh, RaycastPlugin, RayCastSource},
+    raycast::{RayCastMesh, RayCastSource, RaycastPlugin},
     tag::{PlayerModelTag, PlayerTag},
     util::setup_crosshair,
 };
@@ -42,7 +42,7 @@ fn main() {
         .add_plugin(OriginRebasingPlugin)
         .add_plugin(RaycastPlugin::<MyRaycastSet>::default())
         .add_startup_system(setup)
-        .add_startup_system(setup_cursor)
+        // .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
         .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)

@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 use std::marker::PhantomData;
 
-use super::{primitive::Intersection, ray::Ray3d, RayCastMethod};
+use super::{primitives::Intersection, ray::Ray3d, RayCastMethod};
 
 #[derive(Component)]
 pub struct RayCastSource<T> {
     pub cast_method: RayCastMethod,
-    pub(crate) ray: Option<Ray3d>,
-    intersections: Vec<(Entity, Intersection)>,
+    pub ray: Option<Ray3d>,
+    pub intersections: Vec<(Entity, Intersection)>,
     _marker: PhantomData<T>,
 }
 

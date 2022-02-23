@@ -7,6 +7,23 @@ pub struct Ray3d {
     pub(crate) direction: Vec3A,
 }
 
+impl Ray3d {
+    pub fn new(origin: Vec3, direction: Vec3) -> Self {
+        Ray3d {
+            origin: origin.into(),
+            direction: direction.normalize().into(),
+        }
+    }
+
+    pub fn direction(self: Ray3d) -> Vec3 {
+        self.direction.into()
+    }
+
+    pub fn position(&self, distance: f32) -> Vec3 {
+        (self.origin + self.direction * distance).into()
+    }
+}
+
 impl From<Mat4> for Ray3d {
     fn from(transform: Mat4) -> Self {
         let pick_position_ndc = Vec3::from([0.0, 0.0, -1.0]);
