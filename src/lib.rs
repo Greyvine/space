@@ -1,5 +1,6 @@
 pub mod camera;
 pub mod controller;
+pub mod fps;
 pub mod label;
 pub mod mesh;
 pub mod origin;
