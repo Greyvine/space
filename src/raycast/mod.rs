@@ -1,4 +1,5 @@
 pub mod compute_ray;
+pub mod event;
 pub mod label;
 pub mod mesh;
 pub mod method;
@@ -20,11 +21,14 @@ use label::*;
 use state::*;
 use update_raycast::*;
 
+use self::event::HoverEvent;
+
 pub struct RaycastPlugin<T: 'static + Send + Sync>(pub PhantomData<T>);
 
 impl<T: 'static + Send + Sync> Plugin for RaycastPlugin<T> {
     fn build(&self, app: &mut App) {
         app.init_resource::<DefaultPluginState<T>>()
+            .add_event::<HoverEvent>()
             .add_system_set_to_stage(
                 CoreStage::PreUpdate,
                 SystemSet::new()

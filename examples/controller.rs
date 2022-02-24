@@ -1,13 +1,18 @@
 use bevy::{
-    pbr::wireframe::{Wireframe, WireframePlugin},
+    asset::Asset,
+    pbr::{
+        wireframe::{Wireframe, WireframePlugin},
+        SpecializedMaterial,
+    },
     prelude::*,
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
 
 use space::{
     camera::tag::*,
+    fps::FpsPlugin,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    raycast::{RayCastMesh, RayCastSource, RaycastPlugin},
+    raycast::{event::HoverEvent, RayCastMesh, RayCastSource, RaycastPlugin},
     tag::{PlayerModelTag, PlayerTag},
     util::setup_crosshair,
 };
@@ -41,11 +46,14 @@ fn main() {
         .add_plugin(ControllerPlugin)
         .add_plugin(OriginRebasingPlugin)
         .add_plugin(RaycastPlugin::<MyRaycastSet>::default())
+        .add_plugin(FpsPlugin)
         .add_startup_system(setup)
         // .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
         .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)
+        .add_system(handle_lock_on)
+        // .add_system(highlight_marker_events)
         .run();
 }
 
@@ -106,7 +114,7 @@ fn spawn_marker(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mut spawn_cube = |position, color| {
+    let mut spawn_cube = |position, color, name| {
         let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
         let cube_material_handle = materials.add(StandardMaterial {
             base_color: color,
@@ -121,16 +129,17 @@ fn spawn_marker(
                 transform: Transform::from_translation(position),
                 ..Default::default()
             })
+            .insert(Name::new(name))
             .insert(RayCastMesh::<MyRaycastSet>::default());
         // .insert(Wireframe);
     };
 
-    spawn_cube(Vec3::Y * 15.0, Color::RED);
-    spawn_cube(Vec3::Y * -15.0, Color::ORANGE);
-    spawn_cube(Vec3::Z * 15.0, Color::RED);
-    spawn_cube(Vec3::Z * -15.0, Color::ORANGE);
-    spawn_cube(Vec3::X * 15.0, Color::RED);
-    spawn_cube(Vec3::X * -15.0, Color::ORANGE);
+    spawn_cube(Vec3::Y * 15.0, Color::RED, "Aaron");
+    spawn_cube(Vec3::Y * -15.0, Color::ORANGE, "Sara");
+    spawn_cube(Vec3::Z * 15.0, Color::RED, "Jeff");
+    spawn_cube(Vec3::Z * -15.0, Color::ORANGE, "David");
+    spawn_cube(Vec3::X * 15.0, Color::RED, "Per");
+    spawn_cube(Vec3::X * -15.0, Color::ORANGE, "Thomas");
 }
 
 fn spawn_light(mut commands: Commands) {
@@ -156,4 +165,45 @@ fn spawn_light(mut commands: Commands) {
         transform: Transform::from_matrix(light_transform),
         ..Default::default()
     });
+}
+
+// // #[allow(clippy::type_complexity)] <T: Asset>
+// fn highlight_marker(
+//     query: Query<&mut RayCastSource<MyRaycastSet>>,
+//     mut raycast_meshes: Query<&mut Visibility, With<RayCastMesh<MyRaycastSet>>>,
+// ) {
+//     let source = query.single();
+//     for (entity, _) in source.intersections.iter() {
+//         if let Ok(mut visibility) = raycast_meshes.get_mut(*entity) {
+//             // visibility.is_visible = false;
+//         }
+//     }
+// }
+
+// fn highlight_marker_events(
+//     mut hover_events: EventReader<HoverEvent>,
+//     mut raycast_meshes: Query<&mut Visibility, With<RayCastMesh<MyRaycastSet>>>,
+// ) {
+//     for event in hover_events.iter().next() {
+//         if let HoverEvent::JustEntered(entity) = event {
+//             if let Ok(mut visibility) = raycast_meshes.get_mut(*entity) {
+//                 // visibility.is_visible = false;
+//             }
+//         }
+//     }
+// }
+
+fn handle_lock_on(
+    keys: Res<Input<KeyCode>>,
+    query: Query<&mut RayCastSource<MyRaycastSet>>,
+    mut raycast_meshes: Query<(&Name, &mut Visibility), With<RayCastMesh<MyRaycastSet>>>,
+) {
+    if keys.pressed(KeyCode::LControl) {
+        let source = query.single();
+        if let Some((entity, _)) = source.intersections.iter().next() {
+            if let Ok((name, _)) = raycast_meshes.get_mut(*entity) {
+                println!("Lock-on to {}!", name.as_str());
+            }
+        }
+    }
 }

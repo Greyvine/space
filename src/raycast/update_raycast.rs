@@ -13,6 +13,7 @@ use bevy::{
 };
 
 use super::{
+    event::HoverEvent,
     primitives::{Backfaces, Intersection, IntoUsize, RayHit, Triangle, TriangleTrait},
     ray::Ray3d,
     RayCastMesh, RayCastSource,
@@ -22,6 +23,7 @@ use super::{
 pub fn update_raycast<T: 'static + Send + Sync>(
     meshes: Res<Assets<Mesh>>,
     task_pool: Res<ComputeTaskPool>,
+    mut hover_events: EventWriter<HoverEvent>,
     mut source_query: Query<&mut RayCastSource<T>>,
     mesh_query: Query<(&Handle<Mesh>, &GlobalTransform, Entity), With<RayCastMesh<T>>>,
 ) {
@@ -34,15 +36,22 @@ pub fn update_raycast<T: 'static + Send + Sync>(
                     .get(mesh_handle)
                     .and_then(|x| compute_intersection(x, &transform.compute_matrix(), &ray))
                     .and_then(|intersection| {
-                        println!("{:?}", intersection);
                         picks
                             .lock()
                             .unwrap()
                             .insert(FloatOrd(intersection.distance()), (entity, intersection))
                     });
             });
-            let picks = Arc::try_unwrap(picks).unwrap().into_inner().unwrap();
-            source.intersections = picks.into_values().collect();
+            let picks = Arc::try_unwrap(picks)
+                .unwrap()
+                .into_inner()
+                .unwrap()
+                .into_values()
+                .collect();
+            source.intersections = picks;
+            for (entity, _) in source.intersections.iter() {
+                hover_events.send(HoverEvent::JustEntered(*entity));
+            }
         }
     }
 }
