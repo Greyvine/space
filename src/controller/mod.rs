@@ -1,4 +1,4 @@
-mod event;
+pub mod event;
 mod state;
 pub mod tag;
 
@@ -18,7 +18,7 @@ pub struct ControllerPlugin;
 impl Plugin for ControllerPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<LockOnState>()
-            .add_event::<RotationEvent>()
+            .add_event::<ControllerRotationEvent>()
             .add_event::<TranslationEvent>()
             .add_system_to_stage(
                 CoreStage::PreUpdate,
@@ -39,7 +39,7 @@ fn handle_keyboard_input_new(
     look_direction_query: Query<&LookDirection>,
     mut controller_query: Query<&LookEntity>,
     mut translation_events: EventWriter<TranslationEvent>,
-    mut rotation_events: EventWriter<RotationEvent>,
+    mut rotation_events: EventWriter<ControllerRotationEvent>,
 ) {
     if keys.any_pressed([
         KeyCode::W,
@@ -97,7 +97,7 @@ fn handle_keyboard_input_new(
                     desired_velocity *= speed;
 
                     let rotation = Transform::default().looking_at(direction, Vec3::Y).rotation;
-                    rotation_events.send(RotationEvent::new(&rotation));
+                    rotation_events.send(ControllerRotationEvent::new(&rotation));
                     translation_events.send(TranslationEvent::new(&desired_velocity));
                 }
             } else {
@@ -146,7 +146,7 @@ fn handle_keyboard_input_new(
 
                 if clamp_direction {
                     let rotation = Transform::default().looking_at(forward, up).rotation;
-                    rotation_events.send(RotationEvent::new(&rotation));
+                    rotation_events.send(ControllerRotationEvent::new(&rotation));
                 }
                 translation_events.send(TranslationEvent::new(&desired_velocity));
             }
@@ -160,7 +160,7 @@ fn handle_keyboard_input(
     look_direction_query: Query<&LookDirection>,
     mut controller_query: Query<&LookEntity>,
     mut translation_events: EventWriter<TranslationEvent>,
-    mut rotation_events: EventWriter<RotationEvent>,
+    mut rotation_events: EventWriter<ControllerRotationEvent>,
     transforms: Query<&Transform>,
 ) {
     let xz = Vec3::new(1.0, 0.0, 1.0);
@@ -222,12 +222,12 @@ fn handle_keyboard_input(
                     let direction =
                         transform.translation - lock_on_state.player_transform.translation;
                     let rotation = Transform::default().looking_at(direction, up).rotation;
-                    rotation_events.send(RotationEvent::new(&rotation));
+                    rotation_events.send(ControllerRotationEvent::new(&rotation));
                 }
             } else {
                 if clamp_direction {
                     let rotation = Transform::default().looking_at(forward, up).rotation;
-                    rotation_events.send(RotationEvent::new(&rotation));
+                    rotation_events.send(ControllerRotationEvent::new(&rotation));
                 }
             }
 
@@ -251,7 +251,7 @@ fn handle_translation_events(
 
 fn handle_rotation_events(
     time: Res<Time>,
-    mut events: EventReader<RotationEvent>,
+    mut events: EventReader<ControllerRotationEvent>,
     mut query: Query<&mut Transform, With<PlayerModelTag>>,
     mut lock_on_state: ResMut<LockOnState>,
 ) {

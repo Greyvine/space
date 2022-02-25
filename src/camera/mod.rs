@@ -2,18 +2,21 @@ mod event;
 mod look_direction;
 mod look_entity;
 mod mouse_settings;
+mod state;
 
 pub mod tag;
 
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 
+use crate::controller::event::ControllerRotationEvent;
 use crate::lock_on::event::LockOnEvent;
 use crate::raycast::RayCastMesh;
 use crate::tag::MyRaycastSet;
 
 use self::event::*;
 use self::mouse_settings::MouseSettings;
+use self::state::LockOnState;
 use self::tag::*;
 
 pub use self::look_direction::*;
@@ -23,40 +26,44 @@ pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<MouseSettings>()
+        app.init_resource::<LockOnState>().init_resource::<MouseSettings>()
             .add_event::<RotationEvent>()
-            .add_system(handle_mouse_input.system())
-            .add_system(handle_rotation_events.system())
+            .add_system(handle_mouse_input)
+            .add_system(handle_rotation_events)
             .add_system(update_look_direction)
-            .add_system(handle_lock_on_events);
+            .add_system(handle_lock_on_events)
+            .add_system(handle_controller_rotation_events);
     }
 }
 
 const PITCH_BOUND: f32 = std::f32::consts::FRAC_PI_2 - 1E-3;
 
 fn handle_mouse_input(
+    lock_on_state: Res<LockOnState>,
     mut settings: ResMut<MouseSettings>,
     mut mouse_motion_events: EventReader<MouseMotion>,
     mut rotation_events: EventWriter<RotationEvent>,
 ) {
-    let mut delta = Vec2::ZERO;
-    for motion in mouse_motion_events.iter() {
-        delta -= motion.delta;
-    }
-
-    if delta.length_squared() > 1E-6 {
-        delta *= settings.sensitivity;
-        settings.yaw_pitch_roll += delta.extend(0.0);
-        if settings.yaw_pitch_roll.y > PITCH_BOUND {
-            settings.yaw_pitch_roll.y = PITCH_BOUND;
+    if let None = lock_on_state.target {
+        let mut delta = Vec2::ZERO;
+        for motion in mouse_motion_events.iter() {
+            delta -= motion.delta;
         }
-        if settings.yaw_pitch_roll.y < -PITCH_BOUND {
-            settings.yaw_pitch_roll.y = -PITCH_BOUND;
+    
+        if delta.length_squared() > 1E-6 {
+            delta *= settings.sensitivity;
+            settings.yaw_pitch_roll += delta.extend(0.0);
+            if settings.yaw_pitch_roll.y > PITCH_BOUND {
+                settings.yaw_pitch_roll.y = PITCH_BOUND;
+            }
+            if settings.yaw_pitch_roll.y < -PITCH_BOUND {
+                settings.yaw_pitch_roll.y = -PITCH_BOUND;
+            }
+            rotation_events.send(RotationEvent::new(Vec2::new(
+                settings.yaw_pitch_roll.x,
+                settings.yaw_pitch_roll.y,
+            )));
         }
-        rotation_events.send(RotationEvent::new(Vec2::new(
-            settings.yaw_pitch_roll.x,
-            settings.yaw_pitch_roll.y,
-        )));
     }
 }
 
@@ -89,17 +96,40 @@ fn update_look_direction(
 
 fn handle_lock_on_events(
     mut lock_on_events_reader: EventReader<LockOnEvent>,
-    mut rotation_events_writer: EventWriter<RotationEvent>,
-    mut raycast_meshes: Query<(&Name, &mut Transform), With<RayCastMesh<MyRaycastSet>>>,
+    mut lock_on_state: ResMut<LockOnState>,
+    // mut rotation_events_writer: EventWriter<RotationEvent>,
+    // mut raycast_meshes: Query<(&Name, &mut Transform), With<RayCastMesh<MyRaycastSet>>>,
 ) {
     for event in lock_on_events_reader.iter() {
         if let LockOnEvent::Attached(entity) = event {
-            if let Ok((name, transform)) = raycast_meshes.get_mut(*entity) {
-                let rotation = Transform::default()
-                    .looking_at(transform.translation, Vec3::Y)
-                    .rotation;
-                rotation_events_writer.send(RotationEvent::from(rotation));
-                println!("Lock-on to {}!", name.as_str());
+            lock_on_state.target = Some(*entity);
+        } else if let LockOnEvent::Released = event {
+            println!("Release Lock-On");
+            lock_on_state.target = None;
+        }
+
+
+            // if let Ok((name, transform)) = raycast_meshes.get_mut(*entity) {
+            //     let rotation = Transform::default()
+            //         .looking_at(transform.translation, Vec3::Y)
+            //         .rotation;
+            //     rotation_events_writer.send(RotationEvent::from(rotation));
+            //     println!("Lock-on to {}!", name.as_str());
+            // }
+    }
+}
+
+fn handle_controller_rotation_events(
+    lock_on_state: Res<LockOnState>,
+    mut events: EventReader<ControllerRotationEvent>,
+    mut query: Query<&mut Transform, With<CameraTag>>,
+) {
+    if let Some(_) = lock_on_state.target {
+        if let Some(event) = events.iter().next() {
+            for mut transform in query.iter_mut() {
+                transform.rotation = **event;
+                let rotation_matrix = Mat3::from_quat(transform.rotation);
+                transform.translation = rotation_matrix.mul_vec3(Vec3::new(0.0, 2.25, 15.0));
             }
         }
     }
