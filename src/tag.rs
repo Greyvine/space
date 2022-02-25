@@ -8,3 +8,5 @@ pub struct NonPlayerTag;
 
 #[derive(Component)]
 pub struct PlayerModelTag;
+
+pub struct MyRaycastSet;

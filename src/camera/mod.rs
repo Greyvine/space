@@ -8,6 +8,10 @@ pub mod tag;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 
+use crate::lock_on::event::LockOnEvent;
+use crate::raycast::RayCastMesh;
+use crate::tag::MyRaycastSet;
+
 use self::event::*;
 use self::mouse_settings::MouseSettings;
 use self::tag::*;
@@ -23,7 +27,8 @@ impl Plugin for CameraPlugin {
             .add_event::<RotationEvent>()
             .add_system(handle_mouse_input.system())
             .add_system(handle_rotation_events.system())
-            .add_system(update_look_direction);
+            .add_system(update_look_direction)
+            .add_system(handle_lock_on_events);
     }
 }
 
@@ -61,9 +66,7 @@ fn handle_rotation_events(
 ) {
     if let Some(event) = events.iter().next() {
         for mut transform in query.iter_mut() {
-            let rotation = **event;
-            transform.rotation =
-                Quat::from_rotation_y(rotation.x) * Quat::from_rotation_x(rotation.y);
+            transform.rotation = **event;
             let rotation_matrix = Mat3::from_quat(transform.rotation);
             transform.translation = rotation_matrix.mul_vec3(Vec3::new(0.0, 2.25, 15.0));
         }
@@ -76,13 +79,28 @@ fn update_look_direction(
 ) {
     if let Some(event) = events.iter().next() {
         for mut look in query.iter_mut() {
-            let rotation = **event;
-            let rotation_matrix =
-                Quat::from_rotation_x(rotation.y) * Quat::from_rotation_y(rotation.x);
-
+            let rotation_matrix = **event;
             look.forward = rotation_matrix * -Vec3::Z;
             look.right = rotation_matrix * Vec3::X;
             look.up = rotation_matrix * Vec3::Y;
+        }
+    }
+}
+
+fn handle_lock_on_events(
+    mut lock_on_events_reader: EventReader<LockOnEvent>,
+    mut rotation_events_writer: EventWriter<RotationEvent>,
+    mut raycast_meshes: Query<(&Name, &mut Transform), With<RayCastMesh<MyRaycastSet>>>,
+) {
+    for event in lock_on_events_reader.iter() {
+        if let LockOnEvent::Attached(entity) = event {
+            if let Ok((name, transform)) = raycast_meshes.get_mut(*entity) {
+                let rotation = Transform::default()
+                    .looking_at(transform.translation, Vec3::Y)
+                    .rotation;
+                rotation_events_writer.send(RotationEvent::from(rotation));
+                println!("Lock-on to {}!", name.as_str());
+            }
         }
     }
 }

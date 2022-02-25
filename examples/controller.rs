@@ -11,9 +11,10 @@ use bevy::{
 use space::{
     camera::tag::*,
     fps::FpsPlugin,
+    lock_on::LockOnPlugin,
     origin::{OriginRebasingPlugin, SimulationBundle},
     raycast::{event::HoverEvent, RayCastMesh, RayCastSource, RaycastPlugin},
-    tag::{PlayerModelTag, PlayerTag},
+    tag::{MyRaycastSet, PlayerModelTag, PlayerTag},
     util::setup_crosshair,
 };
 use space::{
@@ -27,8 +28,6 @@ pub struct Player;
 
 #[derive(Component)]
 pub struct Planet;
-
-struct MyRaycastSet;
 
 fn main() {
     App::new()
@@ -47,12 +46,13 @@ fn main() {
         .add_plugin(OriginRebasingPlugin)
         .add_plugin(RaycastPlugin::<MyRaycastSet>::default())
         .add_plugin(FpsPlugin)
+        .add_plugin(LockOnPlugin)
         .add_startup_system(setup)
         // .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
         .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)
-        .add_system(handle_lock_on)
+        // .add_system(handle_lock_on)
         // .add_system(highlight_marker_events)
         .run();
 }
@@ -192,18 +192,3 @@ fn spawn_light(mut commands: Commands) {
 //         }
 //     }
 // }
-
-fn handle_lock_on(
-    keys: Res<Input<KeyCode>>,
-    query: Query<&mut RayCastSource<MyRaycastSet>>,
-    mut raycast_meshes: Query<(&Name, &mut Visibility), With<RayCastMesh<MyRaycastSet>>>,
-) {
-    if keys.pressed(KeyCode::LControl) {
-        let source = query.single();
-        if let Some((entity, _)) = source.intersections.iter().next() {
-            if let Ok((name, _)) = raycast_meshes.get_mut(*entity) {
-                println!("Lock-on to {}!", name.as_str());
-            }
-        }
-    }
-}
