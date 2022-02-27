@@ -26,7 +26,8 @@ pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<LockOnState>().init_resource::<MouseSettings>()
+        app.init_resource::<LockOnState>()
+            .init_resource::<MouseSettings>()
             .add_event::<RotationEvent>()
             .add_system(handle_mouse_input)
             .add_system(handle_rotation_events)
@@ -49,7 +50,7 @@ fn handle_mouse_input(
         for motion in mouse_motion_events.iter() {
             delta -= motion.delta;
         }
-    
+
         if delta.length_squared() > 1E-6 {
             delta *= settings.sensitivity;
             settings.yaw_pitch_roll += delta.extend(0.0);
@@ -108,14 +109,13 @@ fn handle_lock_on_events(
             lock_on_state.target = None;
         }
 
-
-            // if let Ok((name, transform)) = raycast_meshes.get_mut(*entity) {
-            //     let rotation = Transform::default()
-            //         .looking_at(transform.translation, Vec3::Y)
-            //         .rotation;
-            //     rotation_events_writer.send(RotationEvent::from(rotation));
-            //     println!("Lock-on to {}!", name.as_str());
-            // }
+        // if let Ok((name, transform)) = raycast_meshes.get_mut(*entity) {
+        //     let rotation = Transform::default()
+        //         .looking_at(transform.translation, Vec3::Y)
+        //         .rotation;
+        //     rotation_events_writer.send(RotationEvent::from(rotation));
+        //     println!("Lock-on to {}!", name.as_str());
+        // }
     }
 }
 

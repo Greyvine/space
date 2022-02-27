@@ -134,12 +134,12 @@ fn spawn_marker(
         // .insert(Wireframe);
     };
 
-    spawn_cube(Vec3::Y * 15.0, Color::RED, "Aaron");
-    spawn_cube(Vec3::Y * -15.0, Color::ORANGE, "Sara");
-    spawn_cube(Vec3::Z * 15.0, Color::RED, "Jeff");
-    spawn_cube(Vec3::Z * -15.0, Color::ORANGE, "David");
+    spawn_cube(Vec3::Y * 15.0, Color::PINK, "Aaron");
+    spawn_cube(Vec3::Y * -15.0, Color::WHITE, "Sara");
+    spawn_cube(Vec3::Z * 15.0, Color::BLUE, "Blue");
+    spawn_cube(Vec3::Z * -15.0, Color::YELLOW, "David");
     spawn_cube(Vec3::X * 15.0, Color::RED, "Per");
-    spawn_cube(Vec3::X * -15.0, Color::ORANGE, "Thomas");
+    spawn_cube(Vec3::X * -15.0, Color::GREEN, "Thomas");
 }
 
 fn spawn_light(mut commands: Commands) {

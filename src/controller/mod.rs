@@ -30,7 +30,7 @@ impl Plugin for ControllerPlugin {
     }
 }
 
-const SPEED: f32 = 20.0;
+const SPEED: f32 = 2.0;
 
 fn handle_keyboard_input_new(
     keys: Res<Input<KeyCode>>,
@@ -56,10 +56,19 @@ fn handle_keyboard_input_new(
                     let direction =
                         transform.translation - lock_on_state.player_transform.translation;
 
+                    let look_direction = look_direction_query
+                        .get_component::<LookDirection>(look_entity.0)
+                        .expect("Failed to get LookDirection from Entity");
                     let (forward, right, up) = (
-                        (direction.z * xz).normalize(),
-                        (direction.x * xz).normalize(),
+                        (look_direction.forward * xz).normalize(),
+                        (look_direction.right * xz).normalize(),
                         Vec3::Y,
+                    );
+
+                    let (forward, right, up) = (
+                        (direction * xz).normalize(),
+                        Vec3::ZERO,
+                        Vec3::Y
                     );
 
                     let mut clamp_direction = false;
@@ -209,7 +218,7 @@ fn handle_keyboard_input(
         }
 
         let speed = if keys.pressed(KeyCode::LShift) {
-            2000.0
+            SPEED
         } else {
             0.5
         };
@@ -273,7 +282,6 @@ fn handle_lock_on_events(
         if let LockOnEvent::Attached(entity) = event {
             lock_on_state.target = Some(*entity);
         } else if let LockOnEvent::Released = event {
-            println!("Release Lock-On");
             lock_on_state.target = None;
         }
     }
