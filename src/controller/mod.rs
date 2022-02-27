@@ -65,11 +65,7 @@ fn handle_keyboard_input_new(
                         Vec3::Y,
                     );
 
-                    let (forward, right, up) = (
-                        (direction * xz).normalize(),
-                        Vec3::ZERO,
-                        Vec3::Y
-                    );
+                    let (forward, right, up) = ((direction * xz).normalize(), Vec3::ZERO, Vec3::Y);
 
                     let mut clamp_direction = false;
 
