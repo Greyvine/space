@@ -3,17 +3,25 @@ use std::ops::Deref;
 
 #[derive(Debug, Default)]
 pub struct RotationEvent {
-    value: Vec2,
+    value: Quat,
 }
 
 impl RotationEvent {
-    pub fn new(value: Vec2) -> Self {
+    pub fn new(v: Vec2) -> Self {
+        Self {
+            value: Quat::from_rotation_y(v.x) * Quat::from_rotation_x(v.y),
+        }
+    }
+}
+
+impl From<Quat> for RotationEvent {
+    fn from(value: Quat) -> Self {
         Self { value }
     }
 }
 
 impl Deref for RotationEvent {
-    type Target = Vec2;
+    type Target = Quat;
 
     fn deref(&self) -> &Self::Target {
         &self.value

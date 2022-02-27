@@ -1,4 +1,9 @@
-use bevy::{prelude::{ResMut, Commands, UiCameraBundle, NodeBundle, Color, BuildChildren}, window::Windows, ui::{AlignItems, JustifyContent, Style, Val, PositionType}, math::Size};
+use bevy::{
+    math::Size,
+    prelude::{BuildChildren, Color, Commands, NodeBundle, ResMut, UiCameraBundle},
+    ui::{AlignItems, JustifyContent, PositionType, Style, Val},
+    window::Windows,
+};
 
 pub fn setup_cursor(mut windows: ResMut<Windows>) {
     let window = windows.get_primary_mut().unwrap();

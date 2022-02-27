@@ -21,17 +21,17 @@ impl Deref for TranslationEvent {
 }
 
 #[derive(Debug, Default)]
-pub struct RotationEvent {
+pub struct ControllerRotationEvent {
     value: Quat,
 }
 
-impl RotationEvent {
+impl ControllerRotationEvent {
     pub fn new(value: &Quat) -> Self {
         Self { value: *value }
     }
 }
 
-impl Deref for RotationEvent {
+impl Deref for ControllerRotationEvent {
     type Target = Quat;
 
     fn deref(&self) -> &Self::Target {
