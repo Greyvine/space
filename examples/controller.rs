@@ -59,10 +59,14 @@ fn main() {
 
 fn setup(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let dimensions = Vec3::new(1.2, 1.0, 5.0) * M_TO_UNIT_SCALE;
+
+    let spaceship_handle = asset_server.load("models/spaceship.gltf#Mesh0/Primitive0");
+
+    let dimensions = Vec3::new(0.75, 0.75, 1.0) * M_TO_UNIT_SCALE;
 
     let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
     let cube_material_handle = materials.add(StandardMaterial {
@@ -80,7 +84,7 @@ fn setup(
 
     let player = commands
         .spawn_bundle(PbrBundle {
-            mesh: cube_handle,
+            mesh: spaceship_handle,
             material: cube_material_handle,
             transform: Transform::from_scale(dimensions),
             ..Default::default()
