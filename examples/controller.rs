@@ -13,6 +13,7 @@ use space::{
     fps::FpsPlugin,
     lock_on::LockOnPlugin,
     origin::{OriginRebasingPlugin, SimulationBundle},
+    projectile::ProjectilePlugin,
     raycast::{event::HoverEvent, RayCastMesh, RayCastSource, RaycastPlugin},
     tag::{MyRaycastSet, PlayerModelTag, PlayerTag},
     util::setup_crosshair,
@@ -47,6 +48,7 @@ fn main() {
         .add_plugin(RaycastPlugin::<MyRaycastSet>::default())
         .add_plugin(FpsPlugin)
         .add_plugin(LockOnPlugin)
+        .add_plugin(ProjectilePlugin)
         .add_startup_system(setup)
         // .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
@@ -54,6 +56,7 @@ fn main() {
         .add_startup_system(setup_crosshair)
         // .add_system(handle_lock_on)
         // .add_system(highlight_marker_events)
+        .insert_resource(ClearColor(Color::BLACK))
         .run();
 }
 
@@ -63,10 +66,9 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-
     let spaceship_handle = asset_server.load("models/spaceship.gltf#Mesh0/Primitive0");
 
-    let dimensions = Vec3::new(0.75, 0.75, 1.0) * M_TO_UNIT_SCALE;
+    let dimensions = Vec3::new(0.5, 0.5, 1.0) * M_TO_UNIT_SCALE;
 
     let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
     let cube_material_handle = materials.add(StandardMaterial {
