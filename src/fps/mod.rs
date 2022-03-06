@@ -35,7 +35,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             value: "FPS: ".to_string(),
                             style: TextStyle {
                                 font: font.clone(),
-                                font_size: 15.0,
+                                font_size: 12.0,
                                 color: Color::WHITE,
                             },
                         },
@@ -43,7 +43,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                             value: "".to_string(),
                             style: TextStyle {
                                 font: font.clone(),
-                                font_size: 15.0,
+                                font_size: 12.0,
                                 color: Color::GOLD,
                             },
                         },

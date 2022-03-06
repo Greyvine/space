@@ -50,27 +50,24 @@ fn main() {
         .add_plugin(LockOnPlugin)
         .add_plugin(ProjectilePlugin)
         .add_startup_system(setup)
-        // .add_startup_system(setup_cursor)
+        .add_startup_system(setup_cursor)
         .add_startup_system(spawn_marker)
         .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)
         // .add_system(handle_lock_on)
-        // .add_system(highlight_marker_events)
-        .insert_resource(ClearColor(Color::BLACK))
+        // .add_system(highlight_marker)
         .run();
 }
 
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let spaceship_handle = asset_server.load("models/spaceship.gltf#Mesh0/Primitive0");
 
     let dimensions = Vec3::new(0.5, 0.5, 1.0) * M_TO_UNIT_SCALE;
 
-    let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
     let cube_material_handle = materials.add(StandardMaterial {
         base_color: Color::BLACK,
         reflectance: 1.0,
@@ -143,9 +140,9 @@ fn spawn_marker(
     spawn_cube(Vec3::Y * 15.0, Color::PINK, "Aaron");
     spawn_cube(Vec3::Y * -15.0, Color::WHITE, "Sara");
     spawn_cube(Vec3::Z * 15.0, Color::BLUE, "Blue");
-    spawn_cube(Vec3::Z * -15.0, Color::YELLOW, "David");
-    spawn_cube(Vec3::X * 15.0, Color::RED, "Per");
-    spawn_cube(Vec3::X * -15.0, Color::GREEN, "Thomas");
+    spawn_cube(Vec3::Z * -15.0, Color::YELLOW, "Yellow");
+    spawn_cube(Vec3::X * 15.0, Color::RED, "Char");
+    spawn_cube(Vec3::X * -15.0, Color::GREEN, "Zaku");
 }
 
 fn spawn_light(mut commands: Commands) {
@@ -153,7 +150,7 @@ fn spawn_light(mut commands: Commands) {
     let light_transform = Mat4::from_euler(EulerRot::ZYX, 0.0, std::f32::consts::FRAC_PI_2, -theta);
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
-            illuminance: 100000.0,
+            illuminance: 99_999.0,
             shadow_projection: OrthographicProjection {
                 left: -0.35,
                 right: 500.35,
@@ -173,18 +170,19 @@ fn spawn_light(mut commands: Commands) {
     });
 }
 
-// // #[allow(clippy::type_complexity)] <T: Asset>
-// fn highlight_marker(
-//     query: Query<&mut RayCastSource<MyRaycastSet>>,
-//     mut raycast_meshes: Query<&mut Visibility, With<RayCastMesh<MyRaycastSet>>>,
-// ) {
-//     let source = query.single();
-//     for (entity, _) in source.intersections.iter() {
-//         if let Ok(mut visibility) = raycast_meshes.get_mut(*entity) {
-//             // visibility.is_visible = false;
-//         }
-//     }
-// }
+// #[allow(clippy::type_complexity)] <T: Asset>
+fn highlight_marker(
+    query: Query<&mut RayCastSource<MyRaycastSet>>,
+    raycast_meshes: Query<&Name, With<RayCastMesh<MyRaycastSet>>>,
+) {
+    let source = query.single();
+    for (entity, _) in source.intersections.iter() {
+        if let Ok(name) = raycast_meshes.get(*entity) {
+            // visibility.is_visible = false;
+            println!("{:?}", name);
+        }
+    }
+}
 
 // fn highlight_marker_events(
 //     mut hover_events: EventReader<HoverEvent>,
