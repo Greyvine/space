@@ -9,13 +9,14 @@ use std::{
 
 use crate::{
     camera::tag::CameraTag,
+    projectile::tag::ProjectileDetectableTag,
     raycast::{
         primitives::{Intersection, IntoUsize, Triangle},
         ray::Ray3d,
         update_raycast::{compute_intersection, triangle_intersection},
         RayCastMesh,
     },
-    tag::{MyRaycastSet, PlayerModelTag}, projectile::tag::ProjectileDetectableTag,
+    tag::{MyRaycastSet, PlayerModelTag},
 };
 use bevy::{
     core::FloatOrd,
@@ -105,8 +106,14 @@ fn detect_hits(
         ),
         With<RayCastMesh<MyRaycastSet>>,
     >,
-    mesh_query: Query<(&Handle<Mesh>, &Name, &GlobalTransform, Entity), With<RayCastMesh<MyRaycastSet>>>,
-    projectiles_query: Query<(&Transform, &GlobalTransform, &Projectile, Entity), With<ProjectileDetectableTag>>,
+    mesh_query: Query<
+        (&Handle<Mesh>, &Name, &GlobalTransform, Entity),
+        With<RayCastMesh<MyRaycastSet>>,
+    >,
+    projectiles_query: Query<
+        (&Transform, &GlobalTransform, &Projectile, Entity),
+        With<ProjectileDetectableTag>,
+    >,
 ) {
     for (transform, projectile_global_transform, projectile, entity) in projectiles_query.iter() {
         let ray = Ray3d::from(transform.compute_matrix());
@@ -123,21 +130,30 @@ fn detect_hits(
             .collect();
         if !culled_entities.is_empty() {
             let picks = Arc::new(Mutex::new(BTreeMap::new()));
-            mesh_query.par_for_each(&task_pool, 32, |(mesh_handle, name, mesh_global_transform, entity)| {
-                if culled_entities.contains(&entity) {
-                    meshes
-                        .get(mesh_handle)
-                        .and_then(|x| {
-                            compute_bullet_intersection(x, &mesh_global_transform.compute_matrix(), projectile_global_transform, &projectile)
-                        })
-                        .and_then(|intersection| {
-                            picks
-                                .lock()
-                                .unwrap()
-                                .insert(FloatOrd(intersection.distance()), name.as_str())
-                        });
-                }
-            });
+            mesh_query.par_for_each(
+                &task_pool,
+                32,
+                |(mesh_handle, name, mesh_global_transform, entity)| {
+                    if culled_entities.contains(&entity) {
+                        meshes
+                            .get(mesh_handle)
+                            .and_then(|x| {
+                                compute_bullet_intersection(
+                                    x,
+                                    &mesh_global_transform.compute_matrix(),
+                                    projectile_global_transform,
+                                    &projectile,
+                                )
+                            })
+                            .and_then(|intersection| {
+                                picks
+                                    .lock()
+                                    .unwrap()
+                                    .insert(FloatOrd(intersection.distance()), name.as_str())
+                            });
+                    }
+                },
+            );
             let picks: Vec<_> = Arc::try_unwrap(picks)
                 .unwrap()
                 .into_inner()
