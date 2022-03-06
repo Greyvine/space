@@ -25,32 +25,62 @@ pub fn update_raycast<T: 'static + Send + Sync>(
     task_pool: Res<ComputeTaskPool>,
     mut hover_events: EventWriter<HoverEvent>,
     mut source_query: Query<&mut RayCastSource<T>>,
+    culling_query: Query<
+        (
+            &Visibility,
+            Option<&bevy::render::primitives::Aabb>,
+            &GlobalTransform,
+            Entity,
+        ),
+        With<RayCastMesh<T>>,
+    >,
     mesh_query: Query<(&Handle<Mesh>, &GlobalTransform, Entity), With<RayCastMesh<T>>>,
 ) {
     for mut source in source_query.iter_mut() {
         if let Some(ray) = source.ray {
             source.intersections.clear();
-            let picks = Arc::new(Mutex::new(BTreeMap::new()));
-            mesh_query.par_for_each(&task_pool, 32, |(mesh_handle, transform, entity)| {
-                meshes
-                    .get(mesh_handle)
-                    .and_then(|x| compute_intersection(x, &transform.compute_matrix(), &ray))
-                    .and_then(|intersection| {
-                        picks
-                            .lock()
-                            .unwrap()
-                            .insert(FloatOrd(intersection.distance()), (entity, intersection))
-                    });
-            });
-            let picks = Arc::try_unwrap(picks)
-                .unwrap()
-                .into_inner()
-                .unwrap()
-                .into_values()
+
+            let culled_entities: Vec<Entity> = culling_query
+                .iter()
+                .filter_map(|(visibility, aab, transform, entity)| {
+                    if visibility.is_visible {
+                        aab.and_then(|x| ray.intersects_aabb(x, &transform.compute_matrix()))
+                            .and_then(|[_, far]| if far >= 0.0 { Some(entity) } else { None })
+                    } else {
+                        return None;
+                    }
+                })
                 .collect();
-            source.intersections = picks;
-            for (entity, _) in source.intersections.iter() {
-                hover_events.send(HoverEvent::JustEntered(*entity));
+
+            if !culled_entities.is_empty() {
+                let picks = Arc::new(Mutex::new(BTreeMap::new()));
+                mesh_query.par_for_each(&task_pool, 32, |(mesh_handle, transform, entity)| {
+                    if culled_entities.contains(&entity) {
+                        meshes
+                            .get(mesh_handle)
+                            .and_then(|x| {
+                                compute_intersection(x, &transform.compute_matrix(), &ray)
+                            })
+                            .and_then(|intersection| {
+                                picks.lock().unwrap().insert(
+                                    FloatOrd(intersection.distance()),
+                                    (entity, intersection),
+                                )
+                            });
+                    }
+                });
+                let picks = Arc::try_unwrap(picks)
+                    .unwrap()
+                    .into_inner()
+                    .unwrap()
+                    .into_values()
+                    .collect();
+                source.intersections = picks;
+                for (entity, _) in source.intersections.iter() {
+                    hover_events.send(HoverEvent::JustEntered(*entity));
+                }
+            } else {
+                source.intersections = Vec::new();
             }
         }
     }
@@ -162,7 +192,7 @@ fn _compute_intersection(
     pick_intersection
 }
 
-fn triangle_intersection(
+pub fn triangle_intersection(
     tri_vertices: [Vec3A; 3],
     tri_normals: Option<[Vec3A; 3]>,
     max_distance: f32,

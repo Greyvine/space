@@ -6,6 +6,7 @@ pub mod lock_on;
 pub mod mesh;
 pub mod origin;
 pub mod planet;
+pub mod projectile;
 pub mod raycast;
 pub mod scale;
 pub mod tag;

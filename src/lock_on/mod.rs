@@ -23,7 +23,7 @@ fn handle_lock_on(
     mut lock_on_events_writer: EventWriter<LockOnEvent>,
     // mut raycast_meshes: Query<(&Name, &mut Visibility), With<RayCastMesh<MyRaycastSet>>>,
 ) {
-    if keys.pressed(KeyCode::LControl) {
+    if keys.pressed(KeyCode::RControl) {
         let source = query.single();
         if let Some((entity, _)) = source.intersections.iter().next() {
             lock_on_events_writer.send(LockOnEvent::Attached(*entity));
