@@ -34,11 +34,14 @@ pub struct ProjectilePlugin;
 struct ProjectileTimer(Timer);
 
 const BULLET_SPEED: f32 = 200.0;
+const FIRE_RATE: f32 = 0.02;
+const MAX_BULLET_DISTANCE: f32 = 1000.0;
+const MAX_DISTANCE_SQUARED: f32 = MAX_BULLET_DISTANCE * MAX_BULLET_DISTANCE;
 
 impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DefaultPluginState>()
-            .insert_resource(ProjectileTimer(Timer::from_seconds(0.01, true)))
+            .insert_resource(ProjectileTimer(Timer::from_seconds(FIRE_RATE, true)))
             .add_system(fire_projectile)
             .add_system(update_bullet)
             .add_system(detect_hits);
@@ -49,13 +52,13 @@ fn fire_projectile(
     mut commands: Commands,
     camera_query: Query<&Transform, With<CameraTag>>,
     player_query: Query<&GlobalTransform, With<PlayerModelTag>>,
-    keys: Res<Input<MouseButton>>,
+    keys: Res<Input<KeyCode>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     time: Res<Time>,
     mut timer: ResMut<ProjectileTimer>,
 ) {
-    if keys.pressed(MouseButton::Left) {
+    if keys.pressed(KeyCode::LControl) {
         if timer.0.tick(time.delta()).just_finished() {
             let camera_transform = camera_query.single();
             let camera_global_transform = player_query.single();
@@ -87,9 +90,21 @@ fn fire_projectile(
     }
 }
 
-fn update_bullet(time: Res<Time>, mut query: Query<(&mut Transform, &Projectile)>) {
-    for (mut transform, projectile) in query.iter_mut() {
-        transform.translation += BULLET_SPEED * projectile.direction * time.delta_seconds();
+fn update_bullet(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(&mut Transform, &Projectile, Entity)>,
+    player_query: Query<&GlobalTransform, With<PlayerModelTag>>,
+) {
+    let player_global_translation = player_query.single().translation;
+    for (mut transform, projectile, entity) in query.iter_mut() {
+        if (transform.translation - player_global_translation).length_squared()
+            > MAX_DISTANCE_SQUARED
+        {
+            commands.entity(entity).despawn();
+        } else {
+            transform.translation += BULLET_SPEED * projectile.direction * time.delta_seconds();
+        }
     }
 }
 
