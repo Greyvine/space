@@ -7,3 +7,6 @@ pub struct Projectile {
     pub direction: Vec3,
     pub ray: Ray3d,
 }
+
+#[derive(Component)]
+pub struct Bullet;

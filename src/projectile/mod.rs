@@ -1,3 +1,4 @@
+mod missile;
 mod projectile;
 mod state;
 mod tag;
@@ -26,24 +27,32 @@ use bevy::{
     tasks::ComputeTaskPool,
 };
 
-use self::{projectile::Projectile, state::DefaultPluginState};
+use self::{
+    missile::{fire_missile, update_missile},
+    projectile::{Bullet, Projectile},
+    state::DefaultPluginState,
+};
 
 #[derive(Default)]
 pub struct ProjectilePlugin;
 
 struct ProjectileTimer(Timer);
+struct MissileTimer(Timer);
 
 const BULLET_SPEED: f32 = 200.0;
 const FIRE_RATE: f32 = 0.02;
 const MAX_BULLET_DISTANCE: f32 = 1000.0;
-const MAX_DISTANCE_SQUARED: f32 = MAX_BULLET_DISTANCE * MAX_BULLET_DISTANCE;
+pub(crate) const MAX_DISTANCE_SQUARED: f32 = MAX_BULLET_DISTANCE * MAX_BULLET_DISTANCE;
 
 impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DefaultPluginState>()
             .insert_resource(ProjectileTimer(Timer::from_seconds(FIRE_RATE, true)))
+            .insert_resource(MissileTimer(Timer::from_seconds(FIRE_RATE, true)))
             .add_system(fire_projectile)
+            .add_system(fire_missile)
             .add_system(update_bullet)
+            .add_system(update_missile)
             .add_system(detect_hits);
     }
 }
@@ -81,6 +90,7 @@ fn fire_projectile(
                     ..Default::default()
                 })
                 .insert(Name::new("Bullet"))
+                .insert(Bullet)
                 .insert(Projectile {
                     direction: ray.direction.into(),
                     ray,
@@ -93,7 +103,7 @@ fn fire_projectile(
 fn update_bullet(
     mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &Projectile, Entity)>,
+    mut query: Query<(&mut Transform, &Projectile, Entity), With<Bullet>>,
     player_query: Query<&GlobalTransform, With<PlayerModelTag>>,
 ) {
     let player_global_translation = player_query.single().translation;
@@ -179,7 +189,7 @@ fn detect_hits(
                 println!("HIT! {:?}", picks);
             }
         } else {
-            commands.entity(entity).remove::<ProjectileDetectableTag>();
+            // commands.entity(entity).remove::<ProjectileDetectableTag>();
         }
     }
 }

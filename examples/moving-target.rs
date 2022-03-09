@@ -28,7 +28,7 @@ use space::{scale::*, util::setup_cursor};
 pub struct Player;
 
 #[derive(Component)]
-pub struct Planet;
+pub struct Target;
 
 fn main() {
     App::new()
@@ -40,6 +40,7 @@ fn main() {
             vsync: false,
             ..Default::default()
         })
+        .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
         .add_plugin(CameraPlugin)
@@ -51,9 +52,10 @@ fn main() {
         .add_plugin(ProjectilePlugin)
         .add_startup_system(setup)
         .add_startup_system(setup_cursor)
-        .add_startup_system(spawn_markers)
+        .add_startup_system(spawn_target)
         .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)
+        .add_system(movement_system)
         // .add_system(handle_lock_on)
         // .add_system(highlight_marker)
         .run();
@@ -97,7 +99,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(0.0, 2.25, 15.0))
                 .looking_at(Vec3::ZERO, Vec3::Y),
             perspective_projection: PerspectiveProjection {
-                far: 10.0 * AU_TO_UNIT_SCALE,
+                far: 1_000.0,
                 ..Default::default()
             },
             ..Default::default()
@@ -112,7 +114,7 @@ fn setup(
         .push_children(&[player, camera]);
 }
 
-fn spawn_markers(
+fn spawn_target(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -134,17 +136,12 @@ fn spawn_markers(
                     .with_scale(Vec3::splat(scale)),
                 ..Default::default()
             })
+            .insert(Target)
             .insert(Name::new(name))
             .insert(RayCastMesh::<MyRaycastSet>::default());
-        // .insert(Wireframe);
     };
 
-    spawn_cube(Vec3::Y * 15.0, Color::PINK, "Aaron");
-    spawn_cube(Vec3::Y * -15.0, Color::WHITE, "Sara");
-    spawn_cube(Vec3::Z * 15.0, Color::BLUE, "Blue");
-    spawn_cube(Vec3::Z * -15.0, Color::YELLOW, "Yellow");
-    spawn_cube(Vec3::X * 15.0, Color::RED, "Char");
-    spawn_cube(Vec3::X * -15.0, Color::GREEN, "Zaku");
+    spawn_cube(Vec3::new(-15.0, 0.0, -15.0), Color::WHITE, "Sara");
 }
 
 fn spawn_light(mut commands: Commands) {
@@ -152,7 +149,7 @@ fn spawn_light(mut commands: Commands) {
     let light_transform = Mat4::from_euler(EulerRot::ZYX, 0.0, std::f32::consts::FRAC_PI_2, -theta);
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
-            illuminance: 99_999.0,
+            illuminance: 9_999.0,
             shadow_projection: OrthographicProjection {
                 left: -0.35,
                 right: 500.35,
@@ -172,29 +169,8 @@ fn spawn_light(mut commands: Commands) {
     });
 }
 
-// #[allow(clippy::type_complexity)] <T: Asset>
-fn highlight_marker(
-    query: Query<&mut RayCastSource<MyRaycastSet>>,
-    raycast_meshes: Query<&Name, With<RayCastMesh<MyRaycastSet>>>,
-) {
-    let source = query.single();
-    for (entity, _) in source.intersections.iter() {
-        if let Ok(name) = raycast_meshes.get(*entity) {
-            // visibility.is_visible = false;
-            println!("{:?}", name);
-        }
+fn movement_system(time: Res<Time>, mut query: Query<&mut Transform, With<Target>>) {
+    for mut transform in query.iter_mut() {
+        transform.translation += Vec3::X * 30.0 * time.delta_seconds();
     }
 }
-
-// fn highlight_marker_events(
-//     mut hover_events: EventReader<HoverEvent>,
-//     mut raycast_meshes: Query<&mut Visibility, With<RayCastMesh<MyRaycastSet>>>,
-// ) {
-//     for event in hover_events.iter().next() {
-//         if let HoverEvent::JustEntered(entity) = event {
-//             if let Ok(mut visibility) = raycast_meshes.get_mut(*entity) {
-//                 // visibility.is_visible = false;
-//             }
-//         }
-//     }
-// }
