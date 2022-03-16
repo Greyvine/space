@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use lininterp::{InvLerp, Lerp};
 
 use crate::{
     camera::tag::CameraTag,
@@ -7,12 +8,17 @@ use crate::{
 };
 
 use super::{
-    projectile::Projectile, tag::ProjectileDetectableTag, MissileTimer, MAX_DISTANCE_SQUARED,
+    projectile::Projectile, tag::ProjectileDetectableTag, MissileTimer, Target,
+    MAX_DISTANCE_SQUARED,
 };
 
-const MISSILE_SPEED: f32 = 200.0;
-const MISSILE_TURN_SPEED: f32 = 10.0;
+const MISSILE_SPEED: f32 = 0.0;
+const MISSILE_TURN_SPEED: f32 = 5.0;
 const MAX_MISSILE_TARGETING_DISTANCE_SQUARED: f32 = MAX_DISTANCE_SQUARED / 4.0;
+
+const maxDistancePredict: f32 = 100.0;
+const minDistancePredict: f32 = 5.0;
+const maxTimePrediction: f32 = 5.0;
 
 #[derive(Component)]
 pub(crate) struct Missile {
@@ -27,7 +33,8 @@ pub(crate) fn fire_missile(
     keys: Res<Input<KeyCode>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    source_query: Query<&mut RayCastSource<MyRaycastSet>>,
+    source_query: Query<&RayCastSource<MyRaycastSet>>,
+    target_query: Query<Entity, With<RayCastMesh<MyRaycastSet>>>,
     // time: Res<Time>,
     // mut timer: ResMut<MissileTimer>,
 ) {
@@ -46,11 +53,15 @@ pub(crate) fn fire_missile(
             ..Default::default()
         });
 
-        let target = source_query
-            .single()
-            .intersections
-            .first()
-            .and_then(|(x, _)| Some(*x));
+        // let target = source_query
+        //     .single()
+        //     .intersections
+        //     .first()
+        //     .and_then(|(x, _)| Some(*x));
+
+        let target = Some(target_query.single());
+
+        let dir: Vec3 = ray.direction.into();
 
         commands
             .spawn_bundle(PbrBundle {
@@ -63,8 +74,11 @@ pub(crate) fn fire_missile(
             })
             .insert(Name::new("Missile"))
             .insert(Projectile {
-                direction: ray.direction.into(),
+                ballistic: true,
+                velocity: dir * MISSILE_SPEED,
+                direction: dir,
                 ray,
+                speed: MISSILE_SPEED,
             })
             .insert(Missile { target })
             .insert(ProjectileDetectableTag);
@@ -75,30 +89,59 @@ pub(crate) fn fire_missile(
 pub(crate) fn update_missile(
     mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &Projectile, &Missile, Entity)>,
+    mut projectile_query: Query<
+        (&mut Transform, &mut Projectile, &Missile, Entity),
+        Without<PlayerModelTag>,
+    >,
     player_query: Query<&GlobalTransform, With<PlayerModelTag>>,
-    target_query: Query<&GlobalTransform, With<RayCastMesh<MyRaycastSet>>>,
+    target_query: Query<(&GlobalTransform, &Target), With<RayCastMesh<MyRaycastSet>>>,
 ) {
     let player_global_translation = player_query.single().translation;
-    for (mut transform, projectile, missile, entity) in query.iter_mut() {
+    for (mut transform, mut projectile, missile, entity) in projectile_query.iter_mut() {
         if (transform.translation - player_global_translation).length_squared()
             > MAX_DISTANCE_SQUARED
         {
             commands.entity(entity).despawn();
         } else {
             if let Some(target) = missile.target {
-                if let Ok(target_transform) = target_query.get(target) {
-                    let rotation = transform
-                        .looking_at(target_transform.translation, Vec3::Y)
-                        .rotation;
+                if let Ok((target_transform, target)) = target_query.get(target) {
+                    // let current_distance = (transform.translation - target_transform.translation).length();
+                    // let lead_time_percentage = minDistancePredict.inv_lerp(&maxTimePrediction, &current_distance);
+                    // let prediction_time = 0.0.lerp(&maxTimePrediction, lead_time_percentage);
+                    // let predicted_translation = target_transform.translation + (target.velocity * prediction_time);
+
+                    // let target_translation = predicted_translation;
+                    let target_translation = target_transform.translation;
+
+                    let looking_at_transform = transform.looking_at(target_translation, Vec3::Y);
+
+                    let rotation = looking_at_transform.rotation;
+
                     transform.rotation = transform
                         .rotation
-                        .slerp(rotation, 10.0 * time.delta_seconds());
+                        .slerp(rotation, MISSILE_TURN_SPEED * time.delta_seconds());
 
-                    let difference = target_transform.translation - transform.translation;
-                    let target_direction = difference.normalize();
+                    let difference = target_translation - transform.translation;
                     transform.translation +=
-                        MISSILE_SPEED * target_direction * time.delta_seconds();
+                        projectile.speed * difference.normalize() * time.delta_seconds();
+
+                    let acceleration = 400.0;
+                    projectile.speed += acceleration * time.delta_seconds();
+
+                    // let difference = target_translation - transform.translation;
+                    // let target_direction = difference.normalize();
+
+                    // let acceleration =
+                    //     MISSILE_TURN_SPEED * 100.0 * m_direction * time.delta_seconds();
+                    // // println!("Velocity {} - Acceleration {}", projectile.velocity, acceleration);
+
+                    // projectile.velocity += acceleration;
+                    // transform.translation += projectile.velocity * time.delta_seconds();
+
+                    // transform.translation += projectile.velocity * 5.0 * time.delta_seconds();
+
+                    // transform.translation +=
+                    //     MISSILE_SPEED * target_direction * time.delta_seconds();
 
                     // let difference = target_transform.translation - transform.translation;
                     // let target_direction = difference.normalize();
@@ -112,8 +155,7 @@ pub(crate) fn update_missile(
                     // }
                 }
             } else {
-                transform.translation +=
-                    MISSILE_SPEED * projectile.direction * time.delta_seconds();
+                transform.translation += projectile.velocity * time.delta_seconds();
             }
         }
     }

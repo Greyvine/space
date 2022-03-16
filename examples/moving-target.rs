@@ -1,9 +1,5 @@
 use bevy::{
-    asset::Asset,
-    pbr::{
-        wireframe::{Wireframe, WireframePlugin},
-        SpecializedMaterial,
-    },
+    pbr::wireframe::WireframePlugin,
     prelude::*,
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
@@ -13,8 +9,8 @@ use space::{
     fps::FpsPlugin,
     lock_on::LockOnPlugin,
     origin::{OriginRebasingPlugin, SimulationBundle},
-    projectile::ProjectilePlugin,
-    raycast::{event::HoverEvent, RayCastMesh, RayCastSource, RaycastPlugin},
+    projectile::{ProjectilePlugin, Target},
+    raycast::{RayCastMesh, RayCastSource, RaycastPlugin},
     tag::{MyRaycastSet, PlayerModelTag, PlayerTag},
     util::setup_crosshair,
 };
@@ -26,9 +22,6 @@ use space::{scale::*, util::setup_cursor};
 
 #[derive(Component)]
 pub struct Player;
-
-#[derive(Component)]
-pub struct Target;
 
 fn main() {
     App::new()
@@ -55,7 +48,7 @@ fn main() {
         .add_startup_system(spawn_target)
         .add_startup_system(spawn_light)
         .add_startup_system(setup_crosshair)
-        .add_system(movement_system)
+        .add_system(move_target)
         // .add_system(handle_lock_on)
         // .add_system(highlight_marker)
         .run();
@@ -136,12 +129,12 @@ fn spawn_target(
                     .with_scale(Vec3::splat(scale)),
                 ..Default::default()
             })
-            .insert(Target)
+            .insert(Target::default())
             .insert(Name::new(name))
             .insert(RayCastMesh::<MyRaycastSet>::default());
     };
 
-    spawn_cube(Vec3::new(-15.0, 0.0, -15.0), Color::WHITE, "Sara");
+    spawn_cube(Vec3::new(-15.0, 0.0, -15.0), Color::RED, "Sara");
 }
 
 fn spawn_light(mut commands: Commands) {
@@ -169,8 +162,12 @@ fn spawn_light(mut commands: Commands) {
     });
 }
 
-fn movement_system(time: Res<Time>, mut query: Query<&mut Transform, With<Target>>) {
-    for mut transform in query.iter_mut() {
-        transform.translation += Vec3::X * 30.0 * time.delta_seconds();
+fn move_target(time: Res<Time>, mut query: Query<(&mut Transform, &mut Target)>) {
+    for (mut transform, mut target) in query.iter_mut() {
+        let size = 30.0;
+        let cosine = time.seconds_since_startup().cos() as f32;
+        let sine = time.seconds_since_startup().sin() as f32;
+        target.velocity = Vec3::new(cosine * size, sine * size, 0.0);
+        transform.translation += target.velocity * time.delta_seconds();
     }
 }

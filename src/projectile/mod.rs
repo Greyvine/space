@@ -39,6 +39,11 @@ pub struct ProjectilePlugin;
 struct ProjectileTimer(Timer);
 struct MissileTimer(Timer);
 
+#[derive(Component, Default)]
+pub struct Target {
+    pub velocity: Vec3,
+}
+
 const BULLET_SPEED: f32 = 200.0;
 const FIRE_RATE: f32 = 0.02;
 const MAX_BULLET_DISTANCE: f32 = 1000.0;
@@ -80,20 +85,27 @@ fn fire_projectile(
                 unlit: true,
                 ..Default::default()
             });
+
+            let dir = ray.direction.into();
+            const BULLET_SPEED: f32 = 200.0;
+
             commands
                 .spawn_bundle(PbrBundle {
                     mesh: cube_handle.clone(),
                     material: cube_material_handle.clone(),
                     transform: Transform::from_translation(camera_global_transform.translation)
                         .with_rotation(camera_transform.rotation)
-                        .with_scale(Vec3::new(0.1, 0.1, 0.5)),
+                        .with_scale(Vec3::new(0.1, 0.1, 0.8)),
                     ..Default::default()
                 })
                 .insert(Name::new("Bullet"))
                 .insert(Bullet)
                 .insert(Projectile {
-                    direction: ray.direction.into(),
+                    ballistic: false,
+                    direction: dir,
+                    velocity: dir * BULLET_SPEED,
                     ray,
+                    speed: BULLET_SPEED,
                 })
                 .insert(ProjectileDetectableTag);
         }
@@ -160,22 +172,35 @@ fn detect_hits(
                 32,
                 |(mesh_handle, name, mesh_global_transform, entity)| {
                     if culled_entities.contains(&entity) {
-                        meshes
-                            .get(mesh_handle)
-                            .and_then(|x| {
-                                compute_bullet_intersection(
-                                    x,
-                                    &mesh_global_transform.compute_matrix(),
-                                    projectile_global_transform,
-                                    &projectile,
-                                )
-                            })
-                            .and_then(|intersection| {
+                        let intersection = meshes.get(mesh_handle).and_then(|x| {
+                            compute_bullet_intersection(
+                                x,
+                                &mesh_global_transform.compute_matrix(),
+                                projectile_global_transform,
+                                &projectile,
+                            )
+                        });
+                        match intersection {
+                            Some(intersection) => {
+                                println!("X");
                                 picks
                                     .lock()
                                     .unwrap()
-                                    .insert(FloatOrd(intersection.distance()), name.as_str())
-                            });
+                                    .insert(FloatOrd(intersection.distance()), name.as_str());
+                            }
+                            None => {
+                                let distance = (mesh_global_transform.translation
+                                    - projectile_global_transform.translation)
+                                    .length();
+                                if projectile.ballistic && distance < 0.05 {
+                                    println!("E");
+                                    picks
+                                        .lock()
+                                        .unwrap()
+                                        .insert(FloatOrd(distance), name.as_str());
+                                }
+                            }
+                        }
                     }
                 },
             );
@@ -186,7 +211,12 @@ fn detect_hits(
                 .into_values()
                 .collect();
             if !picks.is_empty() {
-                println!("HIT! {:?}", picks);
+                if projectile.ballistic {
+                    println!("BOOM {:?}", picks);
+                    commands.entity(entity).despawn();
+                } else {
+                    println!("HIT! {:?}", picks);
+                }
             }
         } else {
             // commands.entity(entity).remove::<ProjectileDetectableTag>();
