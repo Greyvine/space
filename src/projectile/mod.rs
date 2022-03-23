@@ -15,7 +15,7 @@ use crate::{
         primitives::{Intersection, IntoUsize, Triangle},
         ray::Ray3d,
         update_raycast::{compute_intersection, triangle_intersection},
-        RayCastMesh,
+        RayCastMesh, RayCastSource,
     },
     tag::{MyRaycastSet, PlayerModelTag},
 };
@@ -54,7 +54,7 @@ impl Plugin for ProjectilePlugin {
         app.init_resource::<DefaultPluginState>()
             .insert_resource(ProjectileTimer(Timer::from_seconds(FIRE_RATE, true)))
             .insert_resource(MissileTimer(Timer::from_seconds(FIRE_RATE, true)))
-            .add_system(fire_projectile)
+            .add_system(fire_bullet)
             .add_system(fire_missile)
             .add_system(update_bullet)
             .add_system(update_missile)
@@ -62,7 +62,7 @@ impl Plugin for ProjectilePlugin {
     }
 }
 
-fn fire_projectile(
+fn fire_bullet(
     mut commands: Commands,
     camera_query: Query<&Transform, With<CameraTag>>,
     player_query: Query<&GlobalTransform, With<PlayerModelTag>>,
@@ -71,6 +71,8 @@ fn fire_projectile(
     mut materials: ResMut<Assets<StandardMaterial>>,
     time: Res<Time>,
     mut timer: ResMut<ProjectileTimer>,
+    source_query: Query<&RayCastSource<MyRaycastSet>>,
+    target_query: Query<(&GlobalTransform, &Target), With<RayCastMesh<MyRaycastSet>>>,
 ) {
     if keys.pressed(KeyCode::LControl) {
         if timer.0.tick(time.delta()).just_finished() {
@@ -86,7 +88,22 @@ fn fire_projectile(
                 ..Default::default()
             });
 
-            let dir = ray.direction.into();
+            let target = source_query
+                .single()
+                .intersections
+                .first()
+                .and_then(|(_, intersection)| Some(*intersection));
+
+            let dir: Vec3 = target
+                .and_then(|intersection| {
+                    let target_transform = Transform::from_translation(intersection.position);
+                    let d =
+                        camera_global_transform.looking_at(target_transform.translation, Vec3::Y);
+                    let d_ray = Ray3d::from(d.compute_matrix());
+                    Some(d_ray.direction.into())
+                })
+                .unwrap_or(ray.direction.into());
+
             const BULLET_SPEED: f32 = 200.0;
 
             commands
@@ -182,7 +199,6 @@ fn detect_hits(
                         });
                         match intersection {
                             Some(intersection) => {
-                                println!("X");
                                 picks
                                     .lock()
                                     .unwrap()
@@ -193,7 +209,6 @@ fn detect_hits(
                                     - projectile_global_transform.translation)
                                     .length();
                                 if projectile.ballistic && distance < 0.05 {
-                                    println!("E");
                                     picks
                                         .lock()
                                         .unwrap()

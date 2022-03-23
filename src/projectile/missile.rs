@@ -13,12 +13,12 @@ use super::{
 };
 
 const MISSILE_SPEED: f32 = 0.0;
-const MISSILE_TURN_SPEED: f32 = 5.0;
-const MAX_MISSILE_TARGETING_DISTANCE_SQUARED: f32 = MAX_DISTANCE_SQUARED / 4.0;
+const MISSILE_TURN_SPEED: f32 = 10.0;
+// const MAX_MISSILE_TARGETING_DISTANCE_SQUARED: f32 = MAX_DISTANCE_SQUARED / 4.0;
 
-const maxDistancePredict: f32 = 100.0;
-const minDistancePredict: f32 = 5.0;
-const maxTimePrediction: f32 = 5.0;
+// const maxDistancePredict: f32 = 100.0;
+// const minDistancePredict: f32 = 5.0;
+// const maxTimePrediction: f32 = 5.0;
 
 #[derive(Component)]
 pub(crate) struct Missile {
@@ -125,7 +125,7 @@ pub(crate) fn update_missile(
                     transform.translation +=
                         projectile.speed * difference.normalize() * time.delta_seconds();
 
-                    let acceleration = 400.0;
+                    let acceleration = 600.0;
                     projectile.speed += acceleration * time.delta_seconds();
 
                     // let difference = target_translation - transform.translation;
