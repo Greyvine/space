@@ -113,7 +113,7 @@ fn spawn_target(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let mut spawn_cube = |position, color, name| {
-        let scale = 5.0;
+        let scale = 50.0;
         let cube_handle = meshes.add(Mesh::from(shape::Cube::default()));
         let cube_material_handle = materials.add(StandardMaterial {
             base_color: color,
@@ -125,7 +125,7 @@ fn spawn_target(
             .spawn_bundle(PbrBundle {
                 mesh: cube_handle.clone(),
                 material: cube_material_handle.clone(),
-                transform: Transform::from_translation(position * scale)
+                transform: Transform::from_translation(position)
                     .with_scale(Vec3::splat(scale)),
                 ..Default::default()
             })
