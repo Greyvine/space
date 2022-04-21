@@ -63,9 +63,9 @@ impl From<QuadSphere> for Mesh {
 
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
         mesh.set_indices(Some(Indices::U32(surface.indices)));
-        mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, surface.vertices);
-        mesh.set_attribute(Mesh::ATTRIBUTE_NORMAL, surface.normals);
-        mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, surface.uvs);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, surface.vertices);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, surface.normals);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, surface.uvs);
         mesh
     }
 }

@@ -96,7 +96,7 @@ pub fn compute_intersection(
         .expect("Mesh does not contain vertex positions")
     {
         VertexAttributeValues::Float32x3(positions) => positions,
-        _ => panic!("Unexpected types in {}", Mesh::ATTRIBUTE_POSITION),
+        _ => panic!("Unexpected types in {:?}", Mesh::ATTRIBUTE_POSITION),
     };
 
     let normals: Option<&[[f32; 3]]> =

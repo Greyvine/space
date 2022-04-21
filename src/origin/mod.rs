@@ -41,20 +41,20 @@ pub struct OriginRebasingPlugin;
 
 impl Plugin for OriginRebasingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(sync_simulation_coordinates.system());
+        app.add_system(sync_simulation_coordinates);
     }
 }
 
 fn sync_simulation_coordinates(
-    mut q: QuerySet<(
-        QueryState<(&Transform, &mut SimulationCoordinates), With<PlayerTag>>,
-        QueryState<(&mut Transform, &SimulationCoordinates), With<SimulationCoordinates>>,
-        QueryState<&mut SimulationCoordinates, With<NonPlayerTag>>,
+    mut q: ParamSet<(
+        Query<(&Transform, &mut SimulationCoordinates), With<PlayerTag>>,
+        Query<(&mut Transform, &SimulationCoordinates), With<SimulationCoordinates>>,
+        Query<&mut SimulationCoordinates, With<NonPlayerTag>>,
     )>,
 ) {
     let mut shift = Vec3::ZERO;
 
-    for (transform, mut simulation_transform) in q.q0().iter_mut() {
+    for (transform, mut simulation_transform) in q.p0().iter_mut() {
         // println!("{}", transform.translation);
         simulation_transform.local_translation = transform.translation;
         if transform.translation.x < -MAX_BOUND {
@@ -93,7 +93,7 @@ fn sync_simulation_coordinates(
     }
 
     if shift != Vec3::ZERO {
-        for (mut taransform, npc_simulation_coordinates) in q.q1().iter_mut() {
+        for (mut taransform, npc_simulation_coordinates) in q.p1().iter_mut() {
             // let distance = npc_simulation_coordinates.solar_coordinates.distance(a) * MAX_BOUND;
             // if distance < MAX_VIEW {
             taransform.translation += shift;

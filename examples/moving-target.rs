@@ -1,7 +1,7 @@
 use bevy::{
     pbr::wireframe::WireframePlugin,
     prelude::*,
-    render::{options::WgpuOptions, render_resource::WgpuFeatures},
+    render::render_resource::WgpuFeatures, window::PresentMode,
 };
 
 use space::{
@@ -25,12 +25,16 @@ pub struct Player;
 
 fn main() {
     App::new()
-        .insert_resource(WgpuOptions {
-            features: WgpuFeatures::POLYGON_MODE_LINE,
-            ..Default::default()
+        // .insert_resource(WgpuOptions {
+        //     features: WgpuFeatures::POLYGON_MODE_LINE,
+        //     ..Default::default()
+        // })
+        .insert_resource(bevy::log::LogSettings {
+            level: bevy::log::Level::WARN,
+            filter: "space=trace".to_string(),
         })
         .insert_resource(WindowDescriptor {
-            vsync: false,
+            present_mode: PresentMode::Immediate,
             ..Default::default()
         })
         .insert_resource(Msaa { samples: 4 })

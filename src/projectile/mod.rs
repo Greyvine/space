@@ -227,10 +227,10 @@ fn detect_hits(
                 .collect();
             if !picks.is_empty() {
                 if projectile.ballistic {
-                    println!("BOOM {:?}", picks);
+                    trace!("BOOM {:?}", picks);
                     commands.entity(entity).despawn();
                 } else {
-                    println!("HIT! {:?}", picks);
+                    trace!("HIT! {:?}", picks);
                 }
             }
         } else {
